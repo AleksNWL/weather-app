@@ -1,0 +1,30 @@
+services:
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+
+  weather-service:
+    build: ./weather-service
+    container_name: weather-service
+    environment:
+      - OPENWEATHER_API_KEY=e4e92e7da19bc77f1df2ba9e6db5ec3d
+    ports:
+      - "4001:4001"
+
+  gateway:
+    build: ./gateway
+    container_name: gateway
+    depends_on:
+      - weather-service
+    ports:
+      - "4000:4000"
+
+  client:
+    build: ./client
+    container_name: client
+    ports:
+      - "3000:3000"
+    stdin_open: true
+    depends_on:
+      - gateway
