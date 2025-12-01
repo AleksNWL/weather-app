@@ -29,3 +29,11 @@ services:
     depends_on:
       - gateway
 
+  analytics-service:
+    build: ./analytics-service
+    ports:
+      - "4002:4002"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/weather
+    depends_on:
+      - mongo

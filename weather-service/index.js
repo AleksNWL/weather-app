@@ -22,4 +22,10 @@ app.get('/weather/:city', async (req, res) => {
   }
 });
 
+await axios.post('http://analytics-service:4002/history', {
+  city,
+  temperature: response.data.main.temp,
+  description: response.data.weather[0].description
+});
+
 app.listen(PORT, () => console.log(`Weather service running on port ${PORT}`));
