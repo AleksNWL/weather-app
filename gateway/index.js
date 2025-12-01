@@ -1,6 +1,5 @@
 import express from 'express';
 import { ApolloServer, gql } from 'apollo-server-express';
-import fetch from 'node-fetch';
 import cors from 'cors';
 
 const app = express();
@@ -21,15 +20,21 @@ const typeDefs = gql`
 const resolvers = {
   Query: {
     getWeather: async (_, { city }) => {
-      const res = await fetch(`http://weather-service:4001/weather/${city}`);
-      const data = await res.json();
-      return data;
+      try {
+        const res = await fetch(`http://weather-service:4001/weather/${city}`);
+        if (!res.ok) throw new Error(`Weather service error: ${res.status}`);
+        const data = await res.json();
+        return data;
+      } catch (err) {
+        console.error(err);
+        return null;
+      }
     },
   },
 };
 
 const server = new ApolloServer({ typeDefs, resolvers });
 await server.start();
-server.applyMiddleware({ app });
+server.applyMiddleware({ app, path: '/graphql' });
 
-app.listen(4000, () => console.log(`Gateway running on port 4000`));
+app.listen(4000, () => console.log(`Gateway running on http://localhost:4000/graphql`));
