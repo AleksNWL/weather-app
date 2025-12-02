@@ -1,0 +1,40 @@
+.container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.containerMiddle {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 10px;
+  border-radius: 10px;
+  background-color: var(--color-third-bg);
+}
+
+.containerMini {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.icon {}
+
+.heading {
+  font-weight: 700;
+}
+
+.description {}
+
+.containerImage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+}
+
+.weatherIcon {
+  width: 120px;
+  height: 120px;
+  align-self: center;
+}

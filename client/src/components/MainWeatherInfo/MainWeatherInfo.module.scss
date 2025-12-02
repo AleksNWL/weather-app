@@ -1,0 +1,16 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.title {
+  text-shadow: var(--color-shadow);
+  font-size: 1rem;
+}
+
+.icon {
+  width: 2rem;
+  height: auto;
+  text-shadow: var(--color-shadow);
+}

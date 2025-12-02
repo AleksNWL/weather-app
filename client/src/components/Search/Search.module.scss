@@ -1,0 +1,118 @@
+.searchContainer {
+  width: 100%;
+  max-width: 600px;
+  position: relative;
+}
+
+.inputContainer {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+}
+
+.searchInput {
+  width: 100%;
+  max-width: 600px;
+  height: 48px;
+  padding: 8px 36px;
+  box-sizing: border-box;
+  text-align: center;
+  border: none;
+  font-size: 24px;
+  font-weight: 600;
+  border-radius: 20px;
+  background-color: var(--color-secondary-bg);
+  color: var(--color-secondary-text);
+  box-shadow: var(--color-shadow);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.searchInput:focus {
+  color: var(--color-primary-text);
+}
+
+.helperOn {
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.icon {
+  opacity: 0.7;
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+}
+
+.icon:hover {
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.searchSuggestions {
+  position: absolute;
+  max-width: 600px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 1rem;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  background-color: var(--color-secondary-bg);
+  box-shadow: var(--color-shadow);
+}
+
+.searchSuggestion {
+  padding: 0.25rem;
+  border-radius: 10px;
+  background-color: var(--color-primary-bg);
+  box-shadow: var(--color-shadow);
+  font-size: 0.75rem;
+}
+
+.searchSuggestion:hover {
+  cursor: pointer;
+}
+
+.searchSuggestion:active {
+  opacity: 0.8;
+}
+
+@media (max-width: 1280px) {
+  .searchContainer {
+    max-width: 450px;
+  }
+  .searchInput {
+    max-width: 450px;
+    font-size: 18px;
+  }
+  .inputContainer {
+    max-width: 450px;
+  }
+}
+
+@media (max-width: 1080px) {
+  .searchContainer {
+    max-width: 600px;
+  }
+  .searchInput {
+    max-width: 600px;
+    font-size: 18px;
+  }
+  .inputContainer {
+    max-width: 600px;
+  }
+  .icon {
+    width: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .searchInput {
+    border-radius: 20px;
+    min-width: 200px;
+  }
+}

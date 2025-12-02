@@ -1,0 +1,16 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.level {
+  position: absolute;
+  font-size: 1.5rem;
+  text-shadow: var(--color-shadow);
+}
+
+.description {
+  font-weight: 600;
+}

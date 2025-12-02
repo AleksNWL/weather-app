@@ -1,0 +1,65 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    font-family: sans-serif;
+    line-height: 1.2;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+img, picture, video, canvas, svg {
+    display: block;
+    max-width: 100%;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+ul, ol {
+    list-style: none;
+}
+
+input::placeholder {
+    color: #fff;
+}
+
+input:focus {
+    outline: none;
+    color: #fff
+}
+
+button {
+    cursor: pointer;
+}
+
+body {
+    width: 90%;
+    max-width: 1800px;
+    margin: 0 auto;
+    font-family: "Rubik", sans-serif;
+    background-color: var(--color-primary-bg);
+    color: var(--color-primary-text);
+}
+
+span {
+    font-size: 16px;
+}
+
+html {
+    font-size: 16px;
+}
+
+@media (min-width: 1440px) {
+    html {
+        font-size: 18px;
+    }
+}

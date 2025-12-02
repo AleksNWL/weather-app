@@ -1,0 +1,78 @@
+.nextTenDay {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.dayBlock {
+  background-color: var(--color-secondary-bg);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.date {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timeBlock {
+  display: flex;
+  justify-content: space-between;
+  flex: 1 1 200px;
+  background-color: var(--color-third-bg);
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+.timeDay {
+  font-size: 20px;
+  padding-bottom: 8px;
+}
+
+.label {
+  font-size: 18px;
+}
+
+.icon {
+  width: 72px;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.linkText {
+  font-weight: bold;
+  font-size: 1.6rem;
+}
+
+@media (max-width: 1440px) {
+  .timeDay {
+    font-size: 18px;
+  }
+
+  .label {
+    font-size: 16px;
+  }
+
+  .icon {
+    width: 48px;
+    min-width: 48px;
+  }
+}

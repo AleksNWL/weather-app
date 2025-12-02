@@ -1,0 +1,20 @@
+
+
+.container__visibility {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.visibility-item {
+  border-radius: 5px;
+}
+
+.visibility {
+  background-color: #FFFFFF;
+}
+
+.not-visibility {
+  background-color: #44596C;
+}

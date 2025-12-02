@@ -1,49 +1,21 @@
-import { useState } from 'react';
+import './App.scss';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home/Home.tsx';
+import NextTenDay from "./pages/NextTenDay/NextTenDay.tsx";
+import Header from './components/Header/Header.tsx';
+import Footer from './components/Footer/Footer.tsx';
 
-const API_URL = "http://localhost:4000/graphql";
-
-function App() {
-  const [city, setCity] = useState('');
-  const [data, setData] = useState<any>(null);
-
-  const fetchWeather = async () => {
-    const query = `
-      query {
-        getWeather(city: "${city}") {
-          city
-          temperature
-          description
-        }
-      }`;
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query }),
-    });
-    const result = await res.json();
-    setData(result.data.getWeather);
-  };
-
-  return (
-    <div className="app" style={{ textAlign: "center", marginTop: "50px" }}>
-      <h1>Weather App</h1>
-      <input
-        type="text"
-        placeholder="Введите город"
-        value={city}
-        onChange={(e) => setCity(e.target.value)}
-      />
-      <button onClick={fetchWeather}>Показать</button>
-
-      {data && (
-        <div>
-          <h2>{data.city}</h2>
-          <p>{data.temperature} °C</p>
-          <p>{data.description}</p>
-        </div>
-      )}
-    </div>
-  );
+export default function App() {
+    return (
+        <Router>
+            <Header />
+            <main>
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/weather-next-ten-day" element={<NextTenDay />} />
+                </Routes>
+            </main>
+            <Footer />
+        </Router>
+    );
 }
-
-export default App;

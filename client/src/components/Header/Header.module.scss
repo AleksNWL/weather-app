@@ -1,0 +1,26 @@
+.helpContainer {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.search {
+  display: flex;
+  justify-content: space-around;
+}
+
+.likeContainer {
+  display: flex;
+  gap: 32px;
+}
+
+@media (max-width: 1360px) {
+  .likeContainer {
+    gap: 30px;
+  }
+  .search {
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+  }
+}

@@ -1,0 +1,128 @@
+.heading {
+  font-weight: 700;
+}
+
+.containerPollen {
+  display: flex;
+  gap: 20px;
+}
+
+@media (max-width: 500px) {
+  .containerPollen {
+    flex-direction: column;
+  }
+}
+
+.containerFullSelection {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 100%;
+}
+
+.nowDay {
+  font-weight: 600;
+}
+
+.containerSelection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.choice {
+  display: flex;
+  max-width: 70px;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px;
+  border-radius: 5px;
+  background-color: var(--color-third-bg);
+  cursor: pointer;
+}
+
+.choice:active {
+  background-color: var(--color-hover);
+}
+
+.choiceLabel {
+  font-weight: 300;
+  padding-bottom: 2px;
+}
+
+.containerImage {
+  display: flex;
+  gap: 4px;
+}
+
+.containerLevel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 32px;
+  height: 100%;
+}
+
+.containerPollenBar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: var(--color-third-bg);
+  padding: 8px;
+  position: relative;
+  border-radius: 10px;
+}
+
+.barLabel {}
+
+.containerBar {
+  display: flex;
+  justify-content: space-evenly;
+  gap: 8px;
+}
+
+.setData {
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+}
+
+.levelPost {
+  border-top-right-radius: 5px;
+  border-top-left-radius: 5px;
+  align-self: center;
+}
+
+.high, .middle, .low {
+  border-radius: 5px;
+  height: 6.5px;
+  background-color: var(--color-stick);
+}
+
+.high {width: 100%;}
+.middle {width: 75%;}
+.low {width: 50%;}
+
+.red {background-color: #FF6C36;}
+.yellow {background-color: #FFDA36;}
+.green {background-color: #9EFF36;}
+
+.stripe {
+  position: absolute;
+  left: 6px;
+  bottom: 26px;
+  width: 95%;
+  height: 3px;
+  border-radius: 15px;
+  background-color: #ffffff;
+}
+
+@media (max-width: 500px) {
+  .choice {
+    width: 60px;
+  }
+  .containerBar {
+    height: 100px;
+  }
+}

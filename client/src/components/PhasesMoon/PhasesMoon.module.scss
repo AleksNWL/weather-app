@@ -1,0 +1,14 @@
+.image {
+  width: 120px;
+  align-self: center;
+}
+
+.description {
+
+}
+
+@media (max-width: 780px) {
+  .image {
+    width: 100px;
+  }
+}

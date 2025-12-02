@@ -1,0 +1,39 @@
+.mainContainer {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+}
+
+.temperature {
+  font-size: 96px;
+  text-shadow: var(--color-shadow);
+}
+
+.apparentTemperature {
+  font-size: 32px;
+  color: var(--color-secondary-text);
+}
+
+.icon {
+  width: 120px;
+  height: auto;
+}
+
+@media (max-width: 1280px) {
+  .temperature {
+    font-size: 64px;
+  }
+  .apparentTemperature {
+    font-size: 24px;
+    color: var(--color-secondary-text);
+  }
+  .icon {
+    width: 100px;
+  }
+}

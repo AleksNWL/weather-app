@@ -1,0 +1,104 @@
+.weekCarousel {
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.dayList {
+  display: flex;
+  gap: 32px;
+}
+
+.dayItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  gap: 8px;
+  background-color: var(--color-third-bg);
+  min-width: 190px;
+  max-width: 260px;
+  max-height: 400px;
+  width: 100%;
+  border-radius: 10px;
+}
+
+.weekDay {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.weatherIcon {
+  width: 64px;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.temp {
+  font-size: 18px;
+}
+
+.precipitation {
+  display: flex;
+  gap: 8px;
+}
+
+.precipitationValue {
+  font-size: 18px;
+}
+
+.weatherDescription {
+  font-size: 14px;
+  max-width: 120px;
+}
+
+.carouselWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.dayList {
+  display: flex;
+  gap: 2rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 1rem 2.5rem;
+}
+
+.arrowButton {
+  position: absolute;
+  top: 50%;
+  background-color: var(--color-primary-bg);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: var(--color-hover);
+  }
+}
+
+.arrowButton.left {
+  left: 5px;
+}
+
+.arrowButton.right {
+  right: 5px;
+}
