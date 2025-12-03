@@ -337,7 +337,7 @@ function App() {
   };
 
   const getWeatherIcon = (iconCode: string) => {
-    return `http://openweathermap.org/img/wn/${iconCode}@2x.png`;
+    return `https://raw.githubusercontent.com/open-meteo/weather-icons/main/svg/${iconCode}.svg`;
   };
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
@@ -685,7 +685,7 @@ function App() {
       )}
 
       <footer className="footer">
-        <p>Weather Analytics System © 2024 | Данные предоставлены OpenWeatherMap</p>
+        <p>Weather Analytics System © 2024 | Powered by Open-Meteo</p>
         <p className="footer-info">Система поддерживает ввод городов на русском и английском языках</p>
       </footer>
     </div>

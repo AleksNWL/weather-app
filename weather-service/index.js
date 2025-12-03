@@ -6,9 +6,12 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = 4001;
-const API_KEY = process.env.OPENWEATHER_API_KEY;
 
-// Улучшенная функция транслитерации
+// Open-Meteo endpoints (no API key needed)
+const GEOCODE_API = 'https://geocoding-api.open-meteo.com/v1/search';
+const WEATHER_API = 'https://api.open-meteo.com/v1/forecast';
+
+// Transliteration function
 const transliterate = (text) => {
   const ru = 'А-а-Б-б-В-в-Г-г-Д-д-Е-е-Ё-ё-Ж-ж-З-з-И-и-Й-й-К-к-Л-л-М-м-Н-н-О-о-П-п-Р-р-С-с-Т-т-У-у-Ф-ф-Х-х-Ц-ц-Ч-ч-Ш-ш-Щ-щ-Ъ-ъ-Ы-ы-Ь-ь-Э-э-Ю-ю-Я-я'.split('-');
   const en = 'A-a-B-b-V-v-G-g-D-d-E-e-E-e-ZH-zh-Z-z-I-i-J-j-K-k-L-l-M-m-N-n-O-o-P-p-R-r-S-s-T-t-U-u-F-f-H-h-TS-ts-CH-ch-SH-sh-SCH-sch- - -Y-y- - -E-e-YU-yu-YA-ya'.split('-');
@@ -22,275 +25,307 @@ const transliterate = (text) => {
   return result;
 };
 
-// Улучшенная функция для определения языка
+// Language detection function
 const detectLanguage = (text) => {
   const cyrillicPattern = /[а-яА-ЯЁё]/;
-  const latinPattern = /[a-zA-Z]/;
-  
   if (cyrillicPattern.test(text)) {
     return 'ru';
-  } else if (latinPattern.test(text)) {
-    return 'en';
   }
-  return 'unknown';
+  return 'en';
 };
 
+// Convert WMO weather code to description
+const getWeatherDescription = (weatherCode) => {
+  const descriptions = {
+    0: 'Clear sky',
+    1: 'Mainly clear',
+    2: 'Partly cloudy',
+    3: 'Overcast',
+    45: 'Foggy',
+    48: 'Foggy',
+    51: 'Light drizzle',
+    53: 'Moderate drizzle',
+    55: 'Dense drizzle',
+    61: 'Slight rain',
+    63: 'Moderate rain',
+    65: 'Heavy rain',
+    71: 'Slight snow',
+    73: 'Moderate snow',
+    75: 'Heavy snow',
+    77: 'Snow grains',
+    80: 'Slight rain showers',
+    81: 'Moderate rain showers',
+    82: 'Violent rain showers',
+    85: 'Slight snow showers',
+    86: 'Heavy snow showers',
+    95: 'Thunderstorm',
+    96: 'Thunderstorm with hail',
+    99: 'Thunderstorm with hail'
+  };
+  return descriptions[weatherCode] || 'Unknown';
+};
+
+// Convert WMO weather code to icon (OpenWeather compatible)
+const getWeatherIcon = (weatherCode) => {
+  if (weatherCode === 0) return '01d';
+  if (weatherCode === 1 || weatherCode === 2) return '02d';
+  if (weatherCode === 3) return '04d';
+  if (weatherCode === 45 || weatherCode === 48) return '50d';
+  if (weatherCode >= 51 && weatherCode <= 67) return '10d';
+  if (weatherCode >= 71 && weatherCode <= 86) return '13d';
+  if (weatherCode >= 95 && weatherCode <= 99) return '11d';
+  return '01d';
+};
+
+// Geocode endpoint
 app.get('/geocode/:city', async (req, res) => {
   try {
     const { city } = req.params;
-    
-    // 1. Сначала пробуем найти напрямую
-    const directResponse = await axios.get(
-      `http://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=5&appid=${API_KEY}`
-    );
-    
-    if (directResponse.data.length > 0) {
-      return res.json(directResponse.data);
-    }
-    
-    // 2. Если не нашли, и это русский текст - пробуем транслитерацию
-    if (detectLanguage(city) === 'ru') {
-      const transliterated = transliterate(city);
-      console.log(`Trying transliteration: ${city} -> ${transliterated}`);
-      
-      const translitResponse = await axios.get(
-        `http://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(transliterated)}&limit=5&appid=${API_KEY}`
-      );
-      
-      if (translitResponse.data.length > 0) {
-        return res.json(translitResponse.data);
-      }
-    }
-    
-    // 3. Пробуем более общий поиск
-    const searchResponse = await axios.get(
-      `http://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=10&appid=${API_KEY}`
-    );
-    
-    res.json(searchResponse.data);
-    
-  } catch (error) {
-    console.error('Geocoding error:', error.message);
-    res.status(500).json({ 
-      error: 'Geocoding failed',
-      details: error.response?.data?.message || error.message 
-    });
-  }
-});
-
-// Получаем расширенные данные о погоде
-app.get('/weather/:city', async (req, res) => {
-  try {
-    let { city } = req.params;
-    const originalCity = city;
     const language = detectLanguage(city);
-    
     let searchCity = city;
     
-    // Если русский текст - пробуем транслитерацию
     if (language === 'ru') {
       searchCity = transliterate(city);
-      console.log(`Searching weather for: ${originalCity} (transliterated to: ${searchCity})`);
+      console.log(`📍 Geocoding: ${city} -> ${searchCity}`);
     }
     
     const response = await axios.get(
-      `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(searchCity)}&appid=${API_KEY}&units=metric&lang=${language === 'ru' ? 'ru' : 'en'}`
+      `${GEOCODE_API}?name=${encodeURIComponent(searchCity)}&count=10&language=en`
     );
+    
+    if (!response.data.results || response.data.results.length === 0) {
+      return res.status(404).json({ error: 'City not found' });
+    }
+    
+    const results = response.data.results.map(loc => ({
+      name: loc.name,
+      country: loc.country,
+      state: loc.admin1,
+      lat: loc.latitude,
+      lon: loc.longitude,
+      timezone: loc.timezone
+    }));
+    
+    res.json(results);
+  } catch (error) {
+    console.error('Geocoding error:', error.message);
+    res.status(500).json({ error: 'Geocoding failed', details: error.message });
+  }
+});
 
+// Weather endpoint
+app.get('/weather/:city', async (req, res) => {
+  try {
+    const { city } = req.params;
+    const originalCity = city;
+    const language = detectLanguage(city);
+    let searchCity = city;
+    
+    if (language === 'ru') {
+      searchCity = transliterate(city);
+      console.log(`🌤️  Weather search: ${originalCity} -> ${searchCity}`);
+    }
+    
+    // Geocode the city
+    const geoResponse = await axios.get(
+      `${GEOCODE_API}?name=${encodeURIComponent(searchCity)}&count=1&language=en`
+    );
+    
+    if (!geoResponse.data.results || geoResponse.data.results.length === 0) {
+      return res.status(404).json({
+        error: 'City not found',
+        message: 'Try using the city name or select from suggestions',
+        originalQuery: city,
+        language
+      });
+    }
+    
+    const location = geoResponse.data.results[0];
+    const { latitude, longitude, timezone } = location;
+    
+    // Get weather
+    const weatherResponse = await axios.get(
+      `${WEATHER_API}?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,pressure_msl&daily=temperature_2m_max,temperature_2m_min&timezone=${timezone}&temperature_unit=celsius`
+    );
+    
+    const current = weatherResponse.data.current;
+    const daily = weatherResponse.data.daily;
+    
     const weatherData = {
-      city: response.data.name,
+      city: location.name,
       originalQuery: originalCity,
-      country: response.data.sys.country,
-      temperature: response.data.main.temp,
-      feels_like: response.data.main.feels_like,
-      temp_min: response.data.main.temp_min,
-      temp_max: response.data.main.temp_max,
-      humidity: response.data.main.humidity,
-      pressure: response.data.main.pressure,
-      wind_speed: response.data.wind.speed,
-      wind_deg: response.data.wind.deg,
-      description: response.data.weather[0].description,
-      icon: response.data.weather[0].icon,
+      country: location.country,
+      temperature: current.temperature_2m,
+      feels_like: current.apparent_temperature,
+      temp_min: daily.temperature_2m_min[0],
+      temp_max: daily.temperature_2m_max[0],
+      humidity: current.relative_humidity_2m,
+      pressure: Math.round(current.pressure_msl),
+      wind_speed: current.wind_speed_10m,
+      wind_deg: current.wind_direction_10m,
+      description: getWeatherDescription(current.weather_code),
+      icon: getWeatherIcon(current.weather_code),
       coordinates: {
-        lat: response.data.coord.lat,
-        lon: response.data.coord.lon
+        lat: latitude,
+        lon: longitude
       }
     };
-
-    // Отправляем в аналитику
+    
+    // Send to analytics
     try {
-      const analyticsData = {
+      console.log('📤 Sending to analytics:', {
+        city: weatherData.city,
+        originalQuery: weatherData.originalQuery,
+        country: weatherData.country
+      });
+      
+      await axios.post('http://analytics-service:4002/history', {
         ...weatherData,
         date: new Date(),
         queryLanguage: language
-      };
-      
-      console.log('📤 Sending to analytics:', {
-        city: analyticsData.city,
-        originalQuery: analyticsData.originalQuery,
-        country: analyticsData.country
       });
-      
-      await axios.post('http://analytics-service:4002/history', analyticsData);
     } catch (analyticsError) {
-      console.error('Failed to send to analytics:', analyticsError.message);
+      console.error('⚠️  Analytics error:', analyticsError.message);
     }
-
+    
     res.json(weatherData);
   } catch (error) {
-    console.error('Weather fetch error:', error.response?.data || error.message);
-    
-    if (error.response?.status === 404) {
-      return res.status(404).json({ 
-        error: 'Город не найден',
-        message: 'Попробуйте использовать английское название города',
-        originalQuery: req.params.city,
-        language: detectLanguage(req.params.city)
-      });
-    }
-    
-    res.status(500).json({ 
-      error: 'Ошибка при получении данных о погоде',
-      details: error.response?.data?.message || error.message
-    });
+    console.error('Weather fetch error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch weather', details: error.message });
   }
 });
 
-// Прогноз на 5 дней
+// Forecast endpoint
 app.get('/forecast/:city', async (req, res) => {
   try {
-    let { city } = req.params;
+    const { city } = req.params;
     const language = detectLanguage(city);
+    let searchCity = city;
     
-    // Если русский текст - пробуем транслитерацию
     if (language === 'ru') {
-      city = transliterate(city);
+      searchCity = transliterate(city);
     }
     
-    const response = await axios.get(
-      `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric&lang=${language === 'ru' ? 'ru' : 'en'}`
+    // Geocode the city
+    const geoResponse = await axios.get(
+      `${GEOCODE_API}?name=${encodeURIComponent(searchCity)}&count=1&language=en`
     );
-
-    // Группируем по дням
-    const dailyForecasts = {};
-    response.data.list.forEach(item => {
-      const date = item.dt_txt.split(' ')[0];
-      if (!dailyForecasts[date]) {
-        dailyForecasts[date] = {
-          date,
-          temps: [],
-          descriptions: [],
-          humidity: [],
-          icons: []
-        };
-      }
-      dailyForecasts[date].temps.push(item.main.temp);
-      dailyForecasts[date].descriptions.push(item.weather[0].description);
-      dailyForecasts[date].humidity.push(item.main.humidity);
-      dailyForecasts[date].icons.push(item.weather[0].icon);
-    });
-
-    // Агрегируем данные по дням
-    const aggregated = Object.values(dailyForecasts).map(day => ({
-      date: day.date,
-      avgTemp: (day.temps.reduce((a, b) => a + b, 0) / day.temps.length).toFixed(1),
-      minTemp: Math.min(...day.temps).toFixed(1),
-      maxTemp: Math.max(...day.temps).toFixed(1),
-      avgHumidity: Math.round(day.humidity.reduce((a, b) => a + b, 0) / day.humidity.length),
-      mostCommonDescription: getMostCommon(day.descriptions),
-      icon: getMostCommon(day.icons)
+    
+    if (!geoResponse.data.results || geoResponse.data.results.length === 0) {
+      return res.status(404).json({ error: 'City not found' });
+    }
+    
+    const location = geoResponse.data.results[0];
+    const { latitude, longitude, timezone } = location;
+    
+    // Get forecast
+    const forecastResponse = await axios.get(
+      `${WEATHER_API}?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=${timezone}&temperature_unit=celsius`
+    );
+    
+    const daily = forecastResponse.data.daily;
+    
+    const aggregated = daily.time.slice(0, 5).map((date, index) => ({
+      date,
+      avgTemp: ((daily.temperature_2m_max[index] + daily.temperature_2m_min[index]) / 2).toFixed(1),
+      minTemp: daily.temperature_2m_min[index].toFixed(1),
+      maxTemp: daily.temperature_2m_max[index].toFixed(1),
+      mostCommonDescription: getWeatherDescription(daily.weather_code[index]),
+      icon: getWeatherIcon(daily.weather_code[index])
     }));
-
+    
     res.json({
-      city: response.data.city.name,
-      country: response.data.city.country,
-      forecast: aggregated.slice(0, 5)
+      city: location.name,
+      country: location.country,
+      forecast: aggregated
     });
   } catch (error) {
-    res.status(500).json({ 
-      error: 'Ошибка при получении прогноза',
-      details: error.response?.data?.message || error.message
-    });
+    console.error('Forecast error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch forecast', details: error.message });
   }
 });
 
-function getMostCommon(arr) {
-  if (!arr || arr.length === 0) return '';
-  return arr.sort((a,b) =>
-    arr.filter(v => v === a).length - arr.filter(v => v === b).length
-  ).pop();
-}
-
-// Поиск городов с улучшенной обработкой русского языка
+// Search endpoint
 app.get('/search/:query', async (req, res) => {
   try {
     const { query } = req.params;
     const language = detectLanguage(query);
-    
     let searchQuery = query;
     
-    // Если русский текст - добавляем транслитерированный вариант
     if (language === 'ru') {
-      const transliterated = transliterate(query);
-      searchQuery = `${query}|${transliterated}`;
+      searchQuery = transliterate(query);
     }
     
     const response = await axios.get(
-      `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchQuery)}&limit=10&appid=${API_KEY}`
+      `${GEOCODE_API}?name=${encodeURIComponent(searchQuery)}&count=10&language=en`
     );
     
-    const results = response.data.map(city => ({
-      name: city.name,
-      localName: city.local_names?.ru || city.name,
-      country: city.country,
-      state: city.state,
-      lat: city.lat,
-      lon: city.lon,
-      relevance: city.relevance || 0
-    }));
+    if (!response.data.results) {
+      return res.json([]);
+    }
     
-    // Сортируем по релевантности
-    results.sort((a, b) => b.relevance - a.relevance);
+    const results = response.data.results.map(city => ({
+      name: city.name,
+      localName: city.name,
+      country: city.country,
+      state: city.admin1,
+      lat: city.latitude,
+      lon: city.longitude
+    }));
     
     res.json(results.slice(0, 5));
   } catch (error) {
     console.error('Search error:', error.message);
-    res.status(500).json({ 
-      error: 'Ошибка при поиске городов',
-      details: error.message
-    });
+    res.status(500).json({ error: 'Search failed', details: error.message });
   }
 });
 
-// Погода по координатам (резервный вариант)
+// Weather by coordinates endpoint
 app.get('/weather/coordinates/:lat/:lon', async (req, res) => {
   try {
     const { lat, lon } = req.params;
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lon);
     
-    const response = await axios.get(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=ru`
+    // Get location name (reverse geocoding)
+    const geoResponse = await axios.get(
+      `${GEOCODE_API}?latitude=${latitude}&longitude=${longitude}&count=1`
     );
-
+    
+    let cityName = 'Unknown Location';
+    let countryName = '';
+    
+    if (geoResponse.data.results && geoResponse.data.results.length > 0) {
+      const location = geoResponse.data.results[0];
+      cityName = location.name;
+      countryName = location.country;
+    }
+    
+    // Get weather
+    const weatherResponse = await axios.get(
+      `${WEATHER_API}?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,pressure_msl&daily=temperature_2m_max,temperature_2m_min&temperature_unit=celsius`
+    );
+    
+    const current = weatherResponse.data.current;
+    const daily = weatherResponse.data.daily;
+    
     const weatherData = {
-      city: response.data.name,
-      country: response.data.sys.country,
-      temperature: response.data.main.temp,
-      feels_like: response.data.main.feels_like,
-      temp_min: response.data.main.temp_min,
-      temp_max: response.data.main.temp_max,
-      humidity: response.data.main.humidity,
-      pressure: response.data.main.pressure,
-      wind_speed: response.data.wind.speed,
-      wind_deg: response.data.wind.deg,
-      description: response.data.weather[0].description,
-      icon: response.data.weather[0].icon,
-      coordinates: {
-        lat: response.data.coord.lat,
-        lon: response.data.coord.lon
-      }
+      city: cityName,
+      country: countryName,
+      temperature: current.temperature_2m,
+      feels_like: current.apparent_temperature,
+      temp_min: daily.temperature_2m_min[0],
+      temp_max: daily.temperature_2m_max[0],
+      humidity: current.relative_humidity_2m,
+      pressure: Math.round(current.pressure_msl),
+      wind_speed: current.wind_speed_10m,
+      wind_deg: current.wind_direction_10m,
+      description: getWeatherDescription(current.weather_code),
+      icon: getWeatherIcon(current.weather_code),
+      coordinates: { lat: latitude, lon: longitude }
     };
-
-    // Сохраняем в аналитику
+    
+    // Send to analytics
     try {
       await axios.post('http://analytics-service:4002/history', {
         ...weatherData,
@@ -298,16 +333,14 @@ app.get('/weather/coordinates/:lat/:lon', async (req, res) => {
         source: 'coordinates'
       });
     } catch (analyticsError) {
-      console.error('Failed to send to analytics:', analyticsError.message);
+      console.error('⚠️  Analytics error:', analyticsError.message);
     }
-
+    
     res.json(weatherData);
   } catch (error) {
-    res.status(500).json({ 
-      error: 'Ошибка при получении погоды по координатам',
-      details: error.message
-    });
+    console.error('Weather by coordinates error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch weather', details: error.message });
   }
 });
 
-app.listen(PORT, () => console.log(`Weather service running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Weather service running on port ${PORT}`));

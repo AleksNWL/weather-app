@@ -1,14 +1,14 @@
 {
   "name": "weather-service",
   "version": "1.0.0",
-  "description": "Weather Data Service with OpenWeather API integration",
+  "description": "Weather Data Service with Open-Meteo API integration",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["weather", "openweather", "microservice"],
+  "keywords": ["weather", "open-meteo", "microservice"],
   "author": "",
   "license": "ISC",
   "type": "module",

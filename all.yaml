@@ -1,16 +1,4 @@
 # ===============================
-# Secret для OpenWeather API
-# ===============================
-apiVersion: v1
-kind: Secret
-metadata:
-  name: openweather-secret
-type: Opaque
-data:
-  OPENWEATHER_API_KEY: ZTRlOTJlN2RhMTliYzc3ZjFkZjJiYTZkYjVlYzM= # base64 закодированный ключ
-
----
-# ===============================
 # MongoDB Deployment + PVC
 # ===============================
 apiVersion: v1
@@ -130,12 +118,7 @@ spec:
           imagePullPolicy: Never
           ports:
             - containerPort: 4001
-          env:
-            - name: OPENWEATHER_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: openweather-secret
-                  key: OPENWEATHER_API_KEY
+          env: []
 ---
 apiVersion: v1
 kind: Service

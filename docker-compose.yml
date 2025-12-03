@@ -29,7 +29,6 @@ services:
     build: ./weather-service
     container_name: weather-service
     environment:
-      - OPENWEATHER_API_KEY=e4e92e7da19bc77f1df2ba9e6db5ec3d
       - PORT=4001
       - ANALYTICS_SERVICE_URL=http://analytics-service:4002
     ports:
