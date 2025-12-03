@@ -1,39 +1,76 @@
+version: '3.8'
+
 services:
   mongo:
-    image: mongo
+    image: mongo:latest
+    container_name: weather-mongo
     ports:
       - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - weather-network
+
+  analytics-service:
+    build: ./analytics-service
+    container_name: analytics-service
+    ports:
+      - "4002:4002"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/weather
+      - PORT=4002
+    depends_on:
+      - mongo
+    networks:
+      - weather-network
+    command: node src/index.js
 
   weather-service:
     build: ./weather-service
     container_name: weather-service
     environment:
       - OPENWEATHER_API_KEY=e4e92e7da19bc77f1df2ba9e6db5ec3d
+      - PORT=4001
+      - ANALYTICS_SERVICE_URL=http://analytics-service:4002
     ports:
       - "4001:4001"
+    depends_on:
+      - analytics-service
+    networks:
+      - weather-network
+    command: node src/index.js
 
   gateway:
     build: ./gateway
     container_name: gateway
-    depends_on:
-      - weather-service
     ports:
       - "4000:4000"
+    environment:
+      - PORT=4000
+      - WEATHER_SERVICE_URL=http://weather-service:4001
+      - ANALYTICS_SERVICE_URL=http://analytics-service:4002
+    depends_on:
+      - weather-service
+      - analytics-service
+    networks:
+      - weather-network
+    command: node src/index.js
 
   client:
-    build: ./client
-    container_name: client
+    build: 
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: weather-client
     ports:
       - "3000:80"
-    stdin_open: true
     depends_on:
       - gateway
+    networks:
+      - weather-network
 
-  analytics-service:
-    build: ./analytics-service
-    ports:
-      - "4002:4002"
-    environment:
-      - MONGO_URI=mongodb://mongo:27017/weather
-    depends_on:
-      - mongo
+volumes:
+  mongo-data:
+
+networks:
+  weather-network:
+    driver: bridge
