@@ -21,6 +21,7 @@ export const typeDefs = gql`
     wind_deg: Int
     description: String
     icon: String
+    weathercode: Int
     coordinates: Coordinates
   }
 
@@ -32,6 +33,7 @@ export const typeDefs = gql`
     avgHumidity: Int
     mostCommonDescription: String
     icon: String
+    weathercode: Int
   }
 
   type Forecast {

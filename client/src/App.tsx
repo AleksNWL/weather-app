@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import './App.css';
+import getIconWeather from './utils/getIconWeather';
 
 const API_URL = "http://localhost:4000/graphql";
 
@@ -18,6 +19,7 @@ interface WeatherData {
   wind_speed: number;
   description: string;
   icon: string;
+  weathercode?: number;
 }
 
 interface ForecastDay {
@@ -27,6 +29,7 @@ interface ForecastDay {
   maxTemp: string;
   mostCommonDescription: string;
   icon: string;
+  weathercode?: number;
 }
 
 interface HistoryEntry {
@@ -66,6 +69,32 @@ function App() {
   const [activeTab, setActiveTab] = useState<'weather' | 'history' | 'analytics'>('weather');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  // Инициализация темы при загрузке
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    setTheme(initialTheme);
+    applyTheme(initialTheme);
+  }, []);
+
+  const applyTheme = (newTheme: 'light' | 'dark') => {
+    const root = document.documentElement;
+    if (newTheme === 'dark') {
+      root.setAttribute('data-theme', 'dark');
+    } else {
+      root.removeAttribute('data-theme');
+    }
+    localStorage.setItem('theme', newTheme);
+  };
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    applyTheme(newTheme);
+  };
 
   // Загрузка популярных городов при загрузке
   useEffect(() => {
@@ -186,6 +215,7 @@ function App() {
           wind_speed 
           description 
           icon 
+          weathercode
         } 
       }` :
       `query { 
@@ -201,6 +231,7 @@ function App() {
           wind_speed 
           description 
           icon 
+          weathercode
         } 
       }`;
     
@@ -214,6 +245,7 @@ function App() {
             maxTemp
             mostCommonDescription
             icon
+            weathercode
           }
         }
       }`;
@@ -285,8 +317,13 @@ function App() {
         throw new Error(`Не удалось получить данные о погоде для города "${cityName}"`);
       }
 
+      console.log('📦 Полученные данные о погоде:', weatherData);
+      console.log('🌦️ weathercode из ответа:', weatherData.weathercode);
+      console.log('🌦️ icon из ответа:', weatherData.icon);
+
       setWeather(weatherData);
       setForecast(forecastResult.data.getForecast?.forecast || []);
+      console.log('📋 Полученные данные прогноза:', forecastResult.data.getForecast?.forecast);
       setStats(statsResult.data.getCityStats);
       setTrends(trendsResult.data.getCityTrends || []);
       setActiveTab('weather');
@@ -336,18 +373,37 @@ function App() {
     });
   };
 
-  const getWeatherIcon = (iconCode: string) => {
-    return `https://raw.githubusercontent.com/open-meteo/weather-icons/main/svg/${iconCode}.svg`;
-  };
-
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
   return (
     <div className="app">
       <header className="header">
-        <h1>🌤️ Advanced Weather Analytics</h1>
-        <p>Полная информация о погоде и аналитика запросов</p>
-        <p className="language-hint">Можно вводить города на русском или английском языке</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1>🌤️ Advanced Weather Analytics</h1>
+            <p>Полная информация о погоде и аналитика запросов</p>
+            <p className="language-hint">Можно вводить города на русском или английском языке</p>
+          </div>
+          <button 
+            onClick={toggleTheme}
+            style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              borderRadius: '50%',
+              width: '50px',
+              height: '50px',
+              cursor: 'pointer',
+              fontSize: '24px',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            title={theme === 'light' ? 'Включить темную тему' : 'Включить светлую тему'}
+          >
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
+        </div>
       </header>
 
       <div className="search-container">
@@ -415,7 +471,6 @@ function App() {
         <button
           className={activeTab === 'weather' ? 'active' : ''}
           onClick={() => setActiveTab('weather')}
-          disabled={!weather}
         >
           Текущая погода
         </button>
@@ -428,14 +483,15 @@ function App() {
         <button
           className={activeTab === 'analytics' ? 'active' : ''}
           onClick={() => setActiveTab('analytics')}
-          disabled={!weather}
         >
           Аналитика
         </button>
       </nav>
 
-      {weather && activeTab === 'weather' && (
+      {activeTab === 'weather' && (
         <div className="weather-container">
+          {weather ? (
+            <>
           <div className="current-weather">
             <div className="weather-header">
               <div>
@@ -447,11 +503,15 @@ function App() {
                 )}
               </div>
               {weather.icon && (
-                <img 
-                  src={getWeatherIcon(weather.icon)} 
-                  alt={weather.description}
-                  className="weather-icon-large"
-                />
+                <>
+                  {console.log('🎨 Рендерим иконку текущей погоды. weathercode:', weather.weathercode, 'icon:', weather.icon)}
+                  <img 
+                    src={getIconWeather(weather.weathercode || 0).src} 
+                    alt={weather.description}
+                    title={getIconWeather(weather.weathercode || 0).title}
+                    className="weather-icon-large"
+                  />
+                </>
               )}
             </div>
             
@@ -466,24 +526,24 @@ function App() {
                 </div>
               </div>
               
-              <div className="weather-card">
+              <div className="weather-card main">
                 <h3>Влажность</h3>
                 <div className="humidity">{weather.humidity}%</div>
               </div>
               
-              <div className="weather-card">
+              <div className="weather-card main">
                 <h3>Давление</h3>
                 <div className="pressure">{weather.pressure} hPa</div>
               </div>
               
-              <div className="weather-card">
+              <div className="weather-card main">
                 <h3>Ветер</h3>
                 <div className="wind">{weather.wind_speed} m/s</div>
               </div>
               
-              <div className="weather-card description">
+              <div className="weather-card main description">
                 <h3>Состояние</h3>
-                <div className="desc">{weather.description}</div>
+                <div className="desc">{getIconWeather(weather.weathercode || 0).title}</div>
               </div>
             </div>
           </div>
@@ -492,12 +552,15 @@ function App() {
             <div className="forecast">
               <h3>Прогноз на 5 дней</h3>
               <div className="forecast-grid">
-                {forecast.map((day, index) => (
+                {forecast.map((day, index) => {
+                  console.log(`📅 День ${index}: weathercode=${day.weathercode}, icon=${day.icon}`);
+                  return (
                   <div key={index} className="forecast-day">
                     <div className="forecast-date">{formatDate(day.date)}</div>
                     <img 
-                      src={getWeatherIcon(day.icon)} 
+                      src={getIconWeather(day.weathercode || 0).src} 
                       alt={day.mostCommonDescription}
+                      title={getIconWeather(day.weathercode || 0).title}
                       className="forecast-icon"
                     />
                     <div className="forecast-temp">
@@ -506,7 +569,8 @@ function App() {
                     </div>
                     <div className="forecast-desc">{day.mostCommonDescription}</div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -540,6 +604,12 @@ function App() {
                   <div className="stat-value">{stats.mostCommonDescription}</div>
                 </div>
               </div>
+            </div>
+          )}
+            </>
+          ) : (
+            <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+              <p>Введите город для получения информации о погоде</p>
             </div>
           )}
         </div>
@@ -577,6 +647,7 @@ function App() {
         <div className="analytics-container">
           <h2>Аналитика погоды</h2>
           
+          {weather ? (
           <div className="charts-grid">
             {trends.length > 0 && (
               <div className="chart-container">
@@ -681,6 +752,11 @@ function App() {
               </div>
             )}
           </div>
+          ) : (
+            <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+              <p>Введите город для получения аналитики</p>
+            </div>
+          )}
         </div>
       )}
 

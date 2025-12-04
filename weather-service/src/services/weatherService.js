@@ -113,6 +113,10 @@ export const getWeatherByCity = async (city) => {
     const weatherDescription = getWeatherDescription(current.weather_code);
     const weatherIcon = getWeatherIcon(current.weather_code);
     
+    console.log('🌦️ [Weather Service] weather_code от API:', current.weather_code);
+    console.log('📝 [Weather Service] weatherDescription:', weatherDescription);
+    console.log('🎨 [Weather Service] weatherIcon:', weatherIcon);
+    
     const weatherData = {
       city: location.name,
       originalQuery: originalCity,
@@ -127,11 +131,14 @@ export const getWeatherByCity = async (city) => {
       wind_deg: current.wind_direction_10m,
       description: weatherDescription,
       icon: weatherIcon,
+      weathercode: current.weather_code,
       coordinates: {
         lat: latitude,
         lon: longitude
       }
     };
+    
+    console.log('✅ [Weather Service] Отправляемые данные о погоде:', JSON.stringify(weatherData, null, 2));
 
     await sendToAnalytics({
       ...weatherData,
@@ -187,14 +194,19 @@ export const getForecast = async (city) => {
     
     const daily = forecastResponse.data.daily;
     
+    console.log('📋 [Weather Service] daily.weather_code массив:', daily.weather_code);
+    
     const aggregated = daily.time.slice(0, 5).map((date, index) => ({
       date,
       avgTemp: ((daily.temperature_2m_max[index] + daily.temperature_2m_min[index]) / 2).toFixed(1),
       minTemp: daily.temperature_2m_min[index].toFixed(1),
       maxTemp: daily.temperature_2m_max[index].toFixed(1),
       mostCommonDescription: getWeatherDescription(daily.weather_code[index]),
-      icon: getWeatherIcon(daily.weather_code[index])
+      icon: getWeatherIcon(daily.weather_code[index]),
+      weathercode: daily.weather_code[index]
     }));
+
+    console.log('📋 [Weather Service] Агрегированный прогноз:', JSON.stringify(aggregated, null, 2));
 
     return {
       city: location.name,
