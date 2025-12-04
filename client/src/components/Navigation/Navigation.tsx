@@ -1,33 +1,34 @@
 import React from 'react';
-import { ActiveTab } from '../../types/index';
+import { Link, useLocation } from 'react-router-dom';
 import './Navigation.css';
 
-interface NavigationProps {
-  activeTab: ActiveTab;
-  onTabChange: (tab: ActiveTab) => void;
-}
+export const Navigation: React.FC = () => {
+  const location = useLocation();
 
-export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
+  const isActive = (path: string) => {
+    return location.pathname === path || (path === '/' && location.pathname === '');
+  };
+
   return (
     <nav className="tabs">
-      <button
-        className={activeTab === 'weather' ? 'active' : ''}
-        onClick={() => onTabChange('weather')}
+      <Link
+        to="/"
+        className={isActive('/') || isActive('/weather') ? 'active' : ''}
       >
         Текущая погода
-      </button>
-      <button
-        className={activeTab === 'history' ? 'active' : ''}
-        onClick={() => onTabChange('history')}
+      </Link>
+      <Link
+        to="/history"
+        className={isActive('/history') ? 'active' : ''}
       >
         История запросов
-      </button>
-      <button
-        className={activeTab === 'analytics' ? 'active' : ''}
-        onClick={() => onTabChange('analytics')}
+      </Link>
+      <Link
+        to="/analytics"
+        className={isActive('/analytics') ? 'active' : ''}
       >
         Аналитика
-      </button>
+      </Link>
     </nav>
   );
 };

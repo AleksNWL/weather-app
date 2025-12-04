@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import { Header } from './components/Header/Header';
 import { SearchBox } from './components/SearchBox/SearchBox';
 import { Navigation } from './components/Navigation/Navigation';
-import { Weather } from './components/Weather/Weather';
-import { Forecast } from './components/Forecast/Forecast';
-import { HistoryPage } from './pages/HistoryPage';
-import { AnalyticsPage } from './pages/AnalyticsPage';
 import { Footer } from './components/Footer/Footer';
 import { useTheme } from './hooks/useTheme';
 import { weatherService } from './services/weatherService';
@@ -17,8 +14,8 @@ import {
   CityStats,
   PopularCity,
   TrendData,
-  ActiveTab,
 } from './types/index';
+import { WeatherPage, HistoryPage, AnalyticsPage } from './pages/index';
 
 function App() {
   const { theme, toggleTheme } = useTheme();
@@ -29,7 +26,6 @@ function App() {
   const [stats, setStats] = useState<CityStats | null>(null);
   const [trends, setTrends] = useState<TrendData[]>([]);
   const [popularCities, setPopularCities] = useState<PopularCity[]>([]);
-  const [activeTab, setActiveTab] = useState<ActiveTab>('weather');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,7 +77,6 @@ function App() {
       setForecast(forecastData);
       setStats(statsData);
       setTrends(trendsData);
-      setActiveTab('weather');
 
       // Обновляем историю и популярные города
       fetchRecentHistory();
@@ -99,37 +94,63 @@ function App() {
   };
 
   return (
-    <div className="app">
-      <Header theme={theme} onToggleTheme={toggleTheme} />
+    <Router>
+      <div className="app">
+        <Header theme={theme} onToggleTheme={toggleTheme} />
 
-      <SearchBox
-        city={city}
-        onCityChange={handleInputChange}
-        onSearch={fetchWeather}
-        loading={loading}
-        error={error}
-        popularCities={popularCities}
-      />
+        <SearchBox
+          city={city}
+          onCityChange={handleInputChange}
+          onSearch={fetchWeather}
+          loading={loading}
+          error={error}
+          popularCities={popularCities}
+        />
 
-      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
+        <Navigation />
 
-      {activeTab === 'weather' && (
-        <>
-          <Weather weather={weather} stats={stats} />
-          <Forecast forecast={forecast} />
-        </>
-      )}
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <WeatherPage
+                weather={weather}
+                stats={stats}
+                forecast={forecast}
+                loading={loading}
+              />
+            }
+          />
+          <Route
+            path="/weather"
+            element={
+              <WeatherPage
+                weather={weather}
+                stats={stats}
+                forecast={forecast}
+                loading={loading}
+              />
+            }
+          />
+          <Route
+            path="/history"
+            element={<HistoryPage history={history} onRefresh={fetchRecentHistory} />}
+          />
+          <Route
+            path="/analytics"
+            element={
+              <AnalyticsPage
+                weather={weather}
+                trends={trends}
+                popularCities={popularCities}
+              />
+            }
+          />
+        </Routes>
 
-      {activeTab === 'history' && (
-        <HistoryPage history={history} onRefresh={fetchRecentHistory} />
-      )}
-
-      {activeTab === 'analytics' && (
-        <AnalyticsPage weather={weather} trends={trends} popularCities={popularCities} />
-      )}
-
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </Router>
   );
 }
 

@@ -62,4 +62,3 @@ export interface TrendData {
 }
 
 export type Theme = 'light' | 'dark';
-export type ActiveTab = 'weather' | 'history' | 'analytics';

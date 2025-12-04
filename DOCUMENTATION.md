@@ -372,64 +372,652 @@ background: rgba(255, 255, 255, 0.1);
 
 ## 7. Архитектурные диаграммы
 
-### 7.1 Component Architecture (C4 Model - Level 3)
+### 7.0 C4 Model - System Context (Level 1)
 
 ```
-┌────────────────────────────────────────────────────────────────┐
-│ WEATHER SERVICE (localhost:4001)                               │
-│                                                                 │
-│ ┌──────────────────────────────────────────────────────────┐   │
-│ │ Express Server & Routes                                  │   │
-│ │ - GET /weather/:city                                     │   │
-│ │ - GET /forecast/:city                                    │   │
-│ │ - GET /search/:query                                     │   │
-│ │ - GET /health                                            │   │
-│ └──────────────────────────────────────────────────────────┘   │
-│                      ▲                                         │
-│                      │                                         │
-│ ┌────────────────────▼──────────────────────────────────────┐  │
-│ │ Service Layer (Business Logic)                           │  │
-│ │ - weatherService.js                                      │  │
-│ │   • getWeather(city): Promise<Weather>                   │  │
-│ │   • getForecast(city): Promise<Forecast>                 │  │
-│ │   • getCityCoordinates(city): Promise<Coords>            │  │
-│ │ - cacheService.js                                        │  │
-│ │   • get/set/invalidate cache                             │  │
-│ └──────────────────┬─────────────────────────────────────┬──┘ │
-│                    │                                     │     │
-│ ┌──────────────────▼──┐              ┌──────────────────▼──┐   │
-│ │ Utilities          │              │ External APIs      │   │
-│ │ - language.js      │              │ - Open-Meteo       │   │
-│ │ - transliterate()  │              │ - Cache (memory)   │   │
-│ │ - validators.js    │              │ - TTL: 5 minutes   │   │
-│ └────────────────────┘              └────────────────────┘   │
-└────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                                                              │
+│                         USER                                │
+│                    (Web Browser)                            │
+│                                                              │
+└────────────────────────┬─────────────────────────────────────┘
+                         │
+                         │ HTTP/HTTPS
+                         │ Uses
+                         ▼
+┌──────────────────────────────────────────────────────────────┐
+│                                                              │
+│           WEATHER ANALYTICS SYSTEM                          │
+│                                                              │
+│  - Search weather by city                                   │
+│  - View current weather & forecast                          │
+│  - Analyze weather trends                                   │
+│  - Track search history                                     │
+│  - View popular cities                                      │
+│                                                              │
+└────────────────┬──────────────────────────────┬──────────────┘
+                 │                              │
+                 │ REST/GraphQL                │ REST
+                 │                              │
+                 ▼                              ▼
+┌────────────────────────────┐     ┌─────────────────────────┐
+│  External Weather API      │     │     MongoDB             │
+│  (Open-Meteo)              │     │     Database            │
+│                            │     │                         │
+│ - Current weather          │     │  - History              │
+│ - Forecast data            │     │  - Analytics            │
+│ - Geocoding                │     │  - City stats           │
+└────────────────────────────┘     └─────────────────────────┘
 ```
 
-### 7.2 Data Flow Diagram
+### 7.1 C4 Model - Container Diagram (Level 2)
 
 ```
-User Input (City Query)
-    ↓
-GraphQL Gateway (4000)
-    ↓
-Weather Service (4001)
-    ├─→ Check cache
-    │   ├─→ HIT → Return cached data
-    │   └─→ MISS → Call Open-Meteo
-    │
-    └─→ Open-Meteo API
-        ├─→ Geocoding (get coordinates)
-        └─→ Weather/Forecast (get data)
-    ↓
-Format response → Store in cache (TTL=5min)
-    ↓
-Return to client → Display weather
-    ↓
-Log to Analytics Service (4002)
-    ↓
-Store in MongoDB → Compute stats (Aggregation Pipeline)
+┌─────────────────────────────────────────────────────────────────┐
+│                    WEATHER APP SYSTEM                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │              WEB BROWSER / REACT CLIENT                  │  │
+│  │              (Port 3000 / Nginx)                          │  │
+│  │                                                            │  │
+│  │  • Header (Logo, Theme Toggle)                           │  │
+│  │  • SearchBox (City Input, Popular Cities)                │  │
+│  │  • Navigation (Weather / History / Analytics)            │  │
+│  │  • Weather Component (Current, Stats)                    │  │
+│  │  • Forecast Component (5 Days)                           │  │
+│  │  • Analytics Component (Charts, Trends)                  │  │
+│  │  • Footer                                                 │  │
+│  │                                                            │  │
+│  │  Tech: React 18, TypeScript, CSS3, Dark/Light Theme      │  │
+│  │                                                            │  │
+│  └───────────────────────┬──────────────────────────────────┘  │
+│                          │ GraphQL                              │
+│                          │ (HTTP POST)                          │
+│                          ▼                                      │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │        API GATEWAY (Port 4000 / Express + Apollo)        │  │
+│  │                                                            │  │
+│  │  GraphQL Server (Apollo Server)                           │  │
+│  │  • Query Resolvers                                        │  │
+│  │    - getWeather(city)                                     │  │
+│  │    - getForecast(city)                                    │  │
+│  │    - getCityStats(city, days)                             │  │
+│  │    - getCityTrends(city, days)                            │  │
+│  │    - getPopularCities(limit)                              │  │
+│  │    - getHistory(page, limit)                              │  │
+│  │    - searchCities(query)                                  │  │
+│  │                                                            │  │
+│  │  Tech: Node.js, Express, Apollo Server                    │  │
+│  │                                                            │  │
+│  └──────┬──────────────────────────┬──────────────────────────┘ │
+│         │                          │                            │
+│    REST │                          │ REST                       │
+│    4001 │                          │ 4002                       │
+│         ▼                          ▼                            │
+│  ┌─────────────────────┐  ┌──────────────────────┐            │
+│  │   WEATHER SERVICE   │  │ ANALYTICS SERVICE    │            │
+│  │   (Port 4001)       │  │ (Port 4002)          │            │
+│  │                     │  │                      │            │
+│  │ • fetchWeather()    │  │ • saveHistory()      │            │
+│  │ • getForecast()     │  │ • getCityStats()     │            │
+│  │ • searchCities()    │  │ • getCityTrends()    │            │
+│  │ • parseData()       │  │ • getPopularCities() │            │
+│  │ • cacheManagement() │  │ • aggregate()        │            │
+│  │                     │  │                      │            │
+│  │ Tech: Node.js,      │  │ Tech: Node.js,       │            │
+│  │ Express, Axios      │  │ Express, Mongoose    │            │
+│  │                     │  │                      │            │
+│  └────┬────────────────┘  └──────┬───────────────┘            │
+│       │                          │                             │
+│  REST │ (External API)      Mongoose │                        │
+│  GET  │                          │ (Database)                  │
+│       ▼                          ▼                             │
+│  ┌──────────────────┐  ┌──────────────────────┐              │
+│  │  OPEN-METEO API  │  │   MONGODB            │              │
+│  │  (External)      │  │   (Port 27017)       │              │
+│  │                  │  │                      │              │
+│  │ • Geocoding      │  │  Collections:        │              │
+│  │ • Current        │  │  • weather_history   │              │
+│  │ • Forecast       │  │  • city_stats        │              │
+│  │ • WMO codes      │  │  • trends            │              │
+│  │                  │  │                      │              │
+│  └──────────────────┘  └──────────────────────┘              │
+│                                                                │
+└─────────────────────────────────────────────────────────────────┘
 ```
+
+### 7.2 UML Component Diagram (Detailed)
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│                    WEATHER APP ARCHITECTURE                         │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ╔════════════════════════════════════════════════════════════╗   │
+│  ║         CLIENT LAYER (React - Port 3000)                  ║   │
+│  ╚════════════════════════════════════════════════════════════╝   │
+│                                                                     │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐             │
+│  │ App.tsx      │  │ useTheme     │  │ weatherService
+ │             │
+│  │ (Main)      │  │ (Hook)       │  │ (GraphQL)    │             │
+│  └──────────────┘  └──────────────┘  └──────────────┘             │
+│         │                │                     │                   │
+│         └────────────────┼─────────────────────┘                   │
+│                          │                                         │
+│         ┌────────────────┴────────────────┐                       │
+│         │                                 │                       │
+│    ┌────▼─────┐  ┌──────────┐  ┌────────▼────┐  ┌─────────────┐ │
+│    │ Header   │  │SearchBox │  │Navigation   │  │Footer       │ │
+│    └──────────┘  └──────────┘  └─────────────┘  └─────────────┘ │
+│                                                                    │
+│    ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
+│    │Weather       │  │Forecast      │  │Analytics     │         │
+│    │Component     │  │Component     │  │Component     │         │
+│    └──────────────┘  └──────────────┘  └──────────────┘         │
+│                                                                    │
+│    ┌──────────────┐  ┌──────────────┐                            │
+│    │HistoryPage  │  │AnalyticsPage │                            │
+│    └──────────────┘  └──────────────┘                            │
+│                                                                    │
+│                      ↓ HTTP/GraphQL                               │
+│                                                                    │
+│  ╔════════════════════════════════════════════════════════════╗   │
+│  ║         API GATEWAY (GraphQL - Port 4000)                  ║   │
+│  ║         (Express + Apollo Server)                          ║   │
+│  ╚════════════════════════════════════════════════════════════╝   │
+│                                                                    │
+│  ┌────────────────────────────────────────────────────────┐      │
+│  │              Query Resolvers                           │      │
+│  │  ┌────────────────────────────────────────────────┐    │      │
+│  │  │ Weather Resolver:                              │    │      │
+│  │  │ • getWeather(city: String!)                    │    │      │
+│  │  │ • getWeatherRU(city: String!)                  │    │      │
+│  │  │ • getForecast(city: String!)                   │    │      │
+│  │  │ • searchCities(query: String!)                 │    │      │
+│  │  │ • getCityCoordinates(city: String!)            │    │      │
+│  │  └────────────────────────────────────────────────┘    │      │
+│  │  ┌────────────────────────────────────────────────┐    │      │
+│  │  │ Analytics Resolver:                            │    │      │
+│  │  │ • getCityStats(city: String!, days: Int)       │    │      │
+│  │  │ • getCityTrends(city: String!, days: Int)      │    │      │
+│  │  │ • getPopularCities(limit: Int)                 │    │      │
+│  │  │ • getHistory(page: Int, limit: Int)            │    │      │
+│  │  └────────────────────────────────────────────────┘    │      │
+│  └────────────────────────────────────────────────────────┘      │
+│         │                                        │                 │
+│    REST │                                        │ REST           │
+│         ▼                                        ▼                 │
+│  ┌─────────────────────┐  ┌──────────────────────────────┐       │
+│  │ WEATHER SERVICE     │  │ ANALYTICS SERVICE            │       │
+│  │ (Port 4001)         │  │ (Port 4002)                  │       │
+│  ├─────────────────────┤  ├──────────────────────────────┤       │
+│  │ weatherService.js   │  │ index.js                     │       │
+│  │                     │  │ routes/                      │       │
+│  │ • getWeather()      │  │ • POST /history              │       │
+│  │ • getForecast()     │  │ • GET /stats/:city           │       │
+│  │ • searchCities()    │  │ • GET /trends/:city          │       │
+│  │ • parseWeatherData()│  │ • GET /popular               │       │
+│  │ • getWeatherIcon()  │  │ • GET /history               │       │
+│  │ • cacheWeather()    │  │                              │       │
+│  │                     │  │ models/                      │       │
+│  │ utils/              │  │ • WeatherHistory.js          │       │
+│  │ • language.js       │  │                              │       │
+│  │ • transliterate()   │  │ services/                    │       │
+│  └──────┬──────────────┘  │ • analyticsService.js        │       │
+│         │                 │                              │       │
+│    HTTP │ GET             └──────┬────────────────────────┘       │
+│         │                       │                                 │
+│         ▼                       │ Mongoose                       │
+│  ┌──────────────────┐          │                                 │
+│  │ OPEN-METEO API   │          ▼                                 │
+│  │ (External)       │  ┌──────────────────────┐                 │
+│  │                  │  │ MONGODB              │                 │
+│  │ • Geocoding      │  │ (Port 27017)         │                 │
+│  │ • Current        │  │                      │                 │
+│  │ • Forecast       │  │ Collections:         │                 │
+│  │ • WMO codes      │  │ • weather_history    │                 │
+│  └──────────────────┘  │                      │                 │
+│                        └──────────────────────┘                 │
+│                                                                   │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+### 7.3 DFD - Level 0 (Context Diagram)
+
+```
+                        ┌──────────────┐
+                        │              │
+                        │    USER      │
+                        │  (Browser)   │
+                        │              │
+                        └────────┬─────┘
+                                 │
+                    ┌────────────┼────────────┐
+                    │            │            │
+          Search    │ View       │ Analytics  │
+          weather   │ history    │ request    │
+                    │            │            │
+                    ▼            ▼            ▼
+         ┌─────────────────────────────────────────┐
+         │                                         │
+         │    WEATHER APP SYSTEM                   │
+         │   (All Processes Combined)              │
+         │                                         │
+         └──────────┬──────────────┬───────────────┘
+                    │              │
+              Weather│        Analytics
+                    │        data
+                    ▼              ▼
+           ┌──────────────────────────────┐
+           │                              │
+           │    USER INTERFACE            │
+           │   (React Components)         │
+           │                              │
+           └──────────────────────────────┘
+
+Interactions:
+1. User enters city name
+2. System fetches current weather + forecast + stats + trends
+3. System displays weather data, charts, history
+4. User can switch between Weather/History/Analytics tabs
+5. System saves queries to database
+```
+
+### 7.4 DFD - Level 1 (Main Processes)
+
+```
+USER SEARCHES FOR WEATHER
+        │
+        ▼
+    ┌───────────────────────────┐
+    │ 1.0 VALIDATE INPUT        │
+    │ ────────────────────────  │
+    │ Input: city name          │
+    │ Process:                  │
+    │ • Check not empty         │
+    │ • Detect language         │
+    │ • Transliterate if RU     │
+    │ Output: valid city query  │
+    └───────┬───────────────────┘
+            │
+            ├─Error────────────────────────┐
+            │                              │
+            │                              ▼
+            │              ┌──────────────────────────┐
+            │              │ Show Error Message       │
+            │              │ (Invalid city input)     │
+            │              └──────────────────────────┘
+            │
+            │ Valid
+            ▼
+    ┌───────────────────────────────┐
+    │ 2.0 FETCH WEATHER DATA        │
+    │ ────────────────────────────  │
+    │ Input: city name              │
+    │ Process:                      │
+    │ • Call getWeather(city)       │
+    │ • Call getForecast(city)      │
+    │ • Call getCityStats(city)     │
+    │ • Call getCityTrends(city)    │
+    │ (Parallel execution)          │
+    │ Output: weather objects       │
+    └───────┬───────────────────────┘
+            │
+            ├─Error────────────────────────┐
+            │                              │
+            │                              ▼
+            │              ┌──────────────────────────┐
+            │              │ Show Error Message       │
+            │              │ (API failure, No city)   │
+            │              └──────────────────────────┘
+            │
+            │ Success
+            ▼
+    ┌───────────────────────────────────┐
+    │ 3.0 PROCESS & DISPLAY WEATHER     │
+    │ ────────────────────────────────  │
+    │ Inputs: Weather, Forecast, Stats  │
+    │ Process:                          │
+    │ • Format temperatures             │
+    │ • Convert WMO codes to icons      │
+    │ • Parse dates                     │
+    │ • Apply CSS styling               │
+    │ Output: rendered UI               │
+    └───────┬───────────────────────────┘
+            │
+            ▼
+    ┌──────────────────────────────┐
+    │ Weather displayed to user    │
+    │ • Current weather card       │
+    │ • 5-day forecast             │
+    │ • Temperature stats          │
+    │ • Statistics (30 days)       │
+    └──────────────────────────────┘
+
+SAVE TO HISTORY
+        │
+        ▼
+    ┌───────────────────────────────┐
+    │ 4.0 SAVE TO HISTORY           │
+    │ ────────────────────────────  │
+    │ Input: Weather data           │
+    │ Process:                      │
+    │ • Create HistoryEntry object  │
+    │ • Validate data               │
+    │ • POST to Analytics Service   │
+    │ Output: saved entry ID        │
+    └───────┬───────────────────────┘
+            │
+            ▼
+    ┌───────────────────────────────┐
+    │ 5.0 UPDATE ANALYTICS          │
+    │ ────────────────────────────  │
+    │ Input: History entry          │
+    │ Process:                      │
+    │ • Insert into MongoDB         │
+    │ • Update city stats           │
+    │ • Calculate trends            │
+    │ • Update popular cities       │
+    │ Output: updated DB            │
+    └───────┬───────────────────────┘
+            │
+            ▼
+    ┌───────────────────────────────┐
+    │ 6.0 FETCH HISTORY PAGE        │
+    │ ────────────────────────────  │
+    │ Input: pagination params      │
+    │ Process:                      │
+    │ • Query MongoDB               │
+    │ • Sort by date DESC           │
+    │ • Apply pagination            │
+    │ Output: history entries array │
+    └───────┬───────────────────────┘
+            │
+            ▼
+    ┌───────────────────────────────┐
+    │ 7.0 DISPLAY HISTORY           │
+    │ ────────────────────────────  │
+    │ Input: history entries        │
+    │ Process:                      │
+    │ • Map entries to list items   │
+    │ • Format dates                │
+    │ • Display table/grid          │
+    │ Output: rendered HTML         │
+    └───────┬───────────────────────┘
+            │
+            ▼
+    ┌───────────────────────────────┐
+    │ History displayed to user     │
+    │ • City, temp, description     │
+    │ • Timestamp                   │
+    │ • Sortable, refreshable       │
+    └───────────────────────────────┘
+```
+
+### 7.5 ER Diagram (MongoDB Schema)
+
+```
+╔════════════════════════════════════════════╗
+║        WEATHER_HISTORY Collection          ║
+╠════════════════════════════════════════════╣
+║                                            ║
+║ _id: ObjectId (Primary Key)                ║
+║   └─ Unique identifier for each document   ║
+║                                            ║
+║ BASIC INFORMATION                          ║
+║ ├─ city: String (indexed)                  ║
+║ ├─ country: String                         ║
+║ ├─ originalQuery: String                   ║
+║ └─ queryLanguage: String (ru/en)           ║
+║                                            ║
+║ WEATHER DATA                               ║
+║ ├─ temperature: Number (Celsius)           ║
+║ ├─ feels_like: Number                      ║
+║ ├─ temp_min: Number                        ║
+║ ├─ temp_max: Number                        ║
+║ ├─ humidity: Number (0-100%)               ║
+║ ├─ pressure: Number (hPa)                  ║
+║ ├─ wind_speed: Number (m/s)                ║
+║ ├─ wind_deg: Number (0-360°)               ║
+║ ├─ description: String                     ║
+║ ├─ icon: String (icon code)                ║
+║ └─ weathercode: Number (WMO)               ║
+║                                            ║
+║ GEOLOCATION                                ║
+║ └─ coordinates: Object (Embedded)          ║
+║    ├─ lat: Number                          ║
+║    └─ lon: Number                          ║
+║                                            ║
+║ METADATA                                   ║
+║ ├─ date: Date (indexed, DESC)              ║
+║ ├─ source: String (city/coordinates)       ║
+║ ├─ createdAt: Date (default: now)          ║
+║ └─ updatedAt: Date                         ║
+║                                            ║
+╠════════════════════════════════════════════╣
+║ INDEXES                                    ║
+╠════════════════════════════════════════════╣
+║ 1. {city: 1, date: -1}                     ║
+║    └─ Find history for city, sorted        ║
+║                                            ║
+║ 2. {date: -1}                              ║
+║    └─ Get recent searches                  ║
+║                                            ║
+║ 3. {coordinates.lat: 1, coordinates.lon: 1}║
+║    └─ Find by location                     ║
+║                                            ║
+║ 4. {city: 1}                               ║
+║    └─ City statistics                      ║
+║                                            ║
+╚════════════════════════════════════════════╝
+
+SAMPLE DOCUMENT:
+{
+  "_id": ObjectId("6754a3b2c1f2e3d4e5f6g7h8"),
+  "city": "Moscow",
+  "country": "Russia",
+  "originalQuery": "Москва",
+  "queryLanguage": "ru",
+  "temperature": 5.2,
+  "feels_like": 2.1,
+  "temp_min": 3.8,
+  "temp_max": 6.5,
+  "humidity": 85,
+  "pressure": 1013,
+  "wind_speed": 4.2,
+  "wind_deg": 250,
+  "description": "Cloudy",
+  "icon": "02d.png",
+  "weathercode": 2,
+  "coordinates": {
+    "lat": 55.7558,
+    "lon": 37.6173
+  },
+  "date": ISODate("2024-12-04T10:30:00Z"),
+  "source": "city",
+  "createdAt": ISODate("2024-12-04T10:30:15Z"),
+  "updatedAt": ISODate("2024-12-04T10:30:15Z")
+}
+```
+
+### 7.6 GraphQL Schema (SDL)
+
+```graphql
+# ============================================
+# SCALAR TYPES
+# ============================================
+
+scalar Date
+scalar JSON
+
+# ============================================
+# TYPES (Query Responses)
+# ============================================
+
+type Coordinates {
+  lat: Float!
+  lon: Float!
+}
+
+type Weather {
+  city: String!
+  country: String!
+  originalQuery: String
+  temperature: Float!
+  feels_like: Float!
+  temp_min: Float!
+  temp_max: Float!
+  humidity: Int!
+  pressure: Int!
+  wind_speed: Float!
+  wind_deg: Int!
+  description: String!
+  icon: String!
+  weathercode: Int!
+  coordinates: Coordinates!
+}
+
+type ForecastDay {
+  date: String!
+  avgTemp: String!
+  minTemp: String!
+  maxTemp: String!
+  avgHumidity: Int
+  mostCommonDescription: String!
+  icon: String!
+  weathercode: Int!
+}
+
+type Forecast {
+  city: String!
+  country: String!
+  forecast: [ForecastDay!]!
+}
+
+type CitySearchResult {
+  name: String!
+  localName: String
+  country: String!
+  state: String
+  lat: Float!
+  lon: Float!
+}
+
+type CityStats {
+  avgTemp: Float
+  maxTemp: Float
+  minTemp: Float
+  avgHumidity: Float
+  avgPressure: Float
+  avgWindSpeed: Float
+  totalRequests: Int!
+  mostCommonDescription: String
+  period: Int
+}
+
+type TrendData {
+  date: String!
+  avgTemp: Float
+  maxTemp: Float
+  minTemp: Float
+}
+
+type PopularCity {
+  city: String!
+  requests: Int!
+  country: String!
+}
+
+type HistoryEntry {
+  city: String!
+  temperature: Float!
+  description: String!
+  date: String!
+  humidity: Int
+  pressure: Int
+  wind_speed: Float
+  country: String
+}
+
+type HistoryResponse {
+  data: [HistoryEntry!]!
+  pagination: Pagination!
+}
+
+type Pagination {
+  page: Int!
+  limit: Int!
+  total: Int!
+  pages: Int!
+}
+
+# ============================================
+# ROOT QUERY
+# ============================================
+
+type Query {
+  """Get current weather for a city"""
+  getWeather(city: String!): Weather
+
+  """Get current weather for a city (Russian input support)"""
+  getWeatherRU(city: String!): Weather
+
+  """Get 5-day forecast for a city"""
+  getForecast(city: String!): Forecast
+
+  """Search cities by name or coordinates"""
+  searchCities(query: String!): [CitySearchResult!]
+
+  """Get city coordinates"""
+  getCityCoordinates(city: String!): Coordinates
+
+  """Get weather by coordinates"""
+  getWeatherByCoords(lat: Float!, lon: Float!): Weather
+
+  """Get city statistics (average, max, min over period)"""
+  getCityStats(city: String!, days: Int): CityStats
+
+  """Get temperature trends for a city"""
+  getCityTrends(city: String!, days: Int): [TrendData!]
+
+  """Get most popular searched cities"""
+  getPopularCities(limit: Int): [PopularCity!]
+
+  """Get search history with pagination"""
+  getHistory(page: Int, limit: Int): HistoryResponse!
+}
+
+# ============================================
+# ROOT MUTATION (Future)
+# ============================================
+
+type Mutation {
+  """Save user preference"""
+  saveUserPreference(key: String!, value: String!): Boolean
+
+  """Clear search history"""
+  clearHistory: Boolean
+}
+
+# ============================================
+# ROOT SUBSCRIPTION (Future)
+# ============================================
+
+type Subscription {
+  """Subscribe to weather updates for a city"""
+  weatherUpdated(city: String!): Weather
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
+```
+
+**GraphQL Endpoint:** `POST http://localhost:4000/graphql`
 
 ---
 

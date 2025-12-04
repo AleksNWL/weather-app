@@ -247,6 +247,7 @@ body {
   transition: all 0.3s ease;
 }
 
+.tabs a,
 .tabs button {
   flex: 1;
   padding: 15px;
@@ -257,8 +258,17 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 100px;
   color: var(--text-primary);
+  text-decoration: none;
+  display: block;
+  text-align: center;
 }
 
+.tabs a:hover,
+.tabs button:hover {
+  background: var(--bg-secondary);
+}
+
+.tabs a.active,
 .tabs button.active {
   background: linear-gradient(135deg, var(--accent-1) 0%, var(--accent-2) 100%);
   color: white;
