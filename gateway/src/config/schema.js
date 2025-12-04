@@ -44,7 +44,6 @@ export const typeDefs = gql`
 
   type CitySearchResult {
     name: String
-    localName: String
     country: String
     state: String
     lat: Float

@@ -18,7 +18,7 @@ import {
   PopularCity,
   TrendData,
   ActiveTab,
-} from './types/index';
+} from './types';
 
 function App() {
   const { theme, toggleTheme } = useTheme();

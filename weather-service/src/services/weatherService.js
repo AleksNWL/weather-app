@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { OPEN_METEO_ENDPOINTS, ANALYTICS_SERVICE_URL } from '../config/constants.js';
-import { transliterate, detectLanguage, getMostCommon } from '../utils/language.js';
+import { getMostCommon } from '../utils/language.js';
 
 /**
  * Convert WMO weather code to description
@@ -54,16 +54,8 @@ const getWeatherIcon = (weatherCode) => {
  */
 export const geocodeCity = async (city) => {
   try {
-    const language = detectLanguage(city);
-    let searchQuery = city;
-    
-    if (language === 'ru') {
-      searchQuery = transliterate(city);
-      console.log(`📍 Searching for: ${city} (transliterated to: ${searchQuery})`);
-    }
-    
     const response = await axios.get(
-      `${OPEN_METEO_ENDPOINTS.GEOCODE}?name=${encodeURIComponent(searchQuery)}&count=10&language=en`
+      `${OPEN_METEO_ENDPOINTS.GEOCODE}?name=${encodeURIComponent(city)}&count=10&language=en`
     );
     
     if (!response.data.results || response.data.results.length === 0) {
@@ -90,11 +82,8 @@ export const geocodeCity = async (city) => {
  */
 export const getWeatherByCity = async (city) => {
   try {
-    const originalCity = city;
-    const language = detectLanguage(city);
-    
     const geocodingResponse = await axios.get(
-      `${OPEN_METEO_ENDPOINTS.GEOCODE}?name=${encodeURIComponent(language === 'ru' ? transliterate(city) : city)}&count=1&language=en`
+      `${OPEN_METEO_ENDPOINTS.GEOCODE}?name=${encodeURIComponent(city)}&count=1&language=en`
     );
     
     if (!geocodingResponse.data.results || geocodingResponse.data.results.length === 0) {
@@ -119,7 +108,6 @@ export const getWeatherByCity = async (city) => {
     
     const weatherData = {
       city: location.name,
-      originalQuery: originalCity,
       country: location.country,
       temperature: current.temperature_2m,
       feels_like: current.apparent_temperature,
@@ -142,8 +130,7 @@ export const getWeatherByCity = async (city) => {
 
     await sendToAnalytics({
       ...weatherData,
-      date: new Date(),
-      queryLanguage: language
+      date: new Date()
     });
 
     return weatherData;
@@ -156,8 +143,7 @@ export const getWeatherByCity = async (city) => {
         status: 404,
         message: 'City not found',
         hint: 'Try using the city name or selecting from suggestions',
-        originalQuery: city,
-        language: detectLanguage(city)
+        originalQuery: city
       };
     }
     
@@ -170,15 +156,8 @@ export const getWeatherByCity = async (city) => {
  */
 export const getForecast = async (city) => {
   try {
-    const language = detectLanguage(city);
-    let searchCity = city;
-    
-    if (language === 'ru') {
-      searchCity = transliterate(city);
-    }
-    
     const geocodingResponse = await axios.get(
-      `${OPEN_METEO_ENDPOINTS.GEOCODE}?name=${encodeURIComponent(searchCity)}&count=1&language=en`
+      `${OPEN_METEO_ENDPOINTS.GEOCODE}?name=${encodeURIComponent(city)}&count=1&language=en`
     );
     
     if (!geocodingResponse.data.results || geocodingResponse.data.results.length === 0) {
