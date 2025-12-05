@@ -8,3 +8,4 @@ export const POPULAR_CITIES_LIMIT = 5;
 export const HISTORY_LIMIT = 10;
 export const STATS_DAYS = 30;
 export const TRENDS_DAYS = 7;
+export const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds

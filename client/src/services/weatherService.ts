@@ -1,4 +1,4 @@
-import { API_URL, POPULAR_CITIES_LIMIT, HISTORY_LIMIT, STATS_DAYS, TRENDS_DAYS } from '../constants';
+import { API_URL, POPULAR_CITIES_LIMIT, HISTORY_LIMIT, STATS_DAYS, TRENDS_DAYS, CACHE_TTL } from '../constants';
 import {
   WeatherData,
   ForecastDay,
@@ -7,6 +7,7 @@ import {
   PopularCity,
   TrendData,
 } from '../types';
+import { getCache, setCache } from '../utils/cache';
 
 interface ForecastResponse {
   forecast: ForecastDay[];
@@ -30,6 +31,14 @@ interface StatsResponse {
 
 export const weatherService = {
   fetchWeather: async (cityName: string): Promise<WeatherData> => {
+    // Check cache first
+    const cacheKey = `weather_${cityName.toLowerCase()}`;
+    const cached = getCache<WeatherData>(cacheKey);
+    if (cached) {
+      console.log('📦 [Cache] Using cached weather data for', cityName);
+      return cached;
+    }
+
     const query = `query { 
       getWeather(city: "${cityName}") { 
         city 
@@ -64,10 +73,22 @@ export const weatherService = {
       throw new Error(`Не удалось получить данные о погоде для города "${cityName}"`);
     }
 
+    // Cache the result
+    setCache(cacheKey, weatherData, CACHE_TTL);
+    console.log('💾 [Cache] Cached weather data for', cityName);
+
     return weatherData;
   },
 
   fetchForecast: async (cityName: string): Promise<ForecastDay[]> => {
+    // Check cache first
+    const cacheKey = `forecast_${cityName.toLowerCase()}`;
+    const cached = getCache<ForecastDay[]>(cacheKey);
+    if (cached) {
+      console.log('📦 [Cache] Using cached forecast data for', cityName);
+      return cached;
+    }
+
     const query = `
       query {
         getForecast(city: "${cityName}") {
@@ -90,10 +111,24 @@ export const weatherService = {
     });
 
     const result = await res.json();
-    return result.data.getForecast?.forecast || [];
+    const forecastData = result.data.getForecast?.forecast || [];
+
+    // Cache the result
+    setCache(cacheKey, forecastData, CACHE_TTL);
+    console.log('💾 [Cache] Cached forecast data for', cityName);
+
+    return forecastData;
   },
 
   fetchStats: async (cityName: string): Promise<CityStats | null> => {
+    // Check cache first
+    const cacheKey = `stats_${cityName.toLowerCase()}_${STATS_DAYS}`;
+    const cached = getCache<CityStats | null>(cacheKey);
+    if (cached !== null) {
+      console.log('📦 [Cache] Using cached stats data for', cityName);
+      return cached;
+    }
+
     const query = `
       query {
         getCityStats(city: "${cityName}", days: ${STATS_DAYS}) {
@@ -113,10 +148,24 @@ export const weatherService = {
     });
 
     const result = await res.json();
-    return result.data.getCityStats;
+    const statsData = result.data.getCityStats;
+
+    // Cache the result (even if null)
+    setCache(cacheKey, statsData, CACHE_TTL);
+    console.log('💾 [Cache] Cached stats data for', cityName);
+
+    return statsData;
   },
 
   fetchTrends: async (cityName: string): Promise<TrendData[]> => {
+    // Check cache first
+    const cacheKey = `trends_${cityName.toLowerCase()}_${TRENDS_DAYS}`;
+    const cached = getCache<TrendData[]>(cacheKey);
+    if (cached) {
+      console.log('📦 [Cache] Using cached trends data for', cityName);
+      return cached;
+    }
+
     const query = `
       query {
         getCityTrends(city: "${cityName}", days: ${TRENDS_DAYS}) {
@@ -134,7 +183,13 @@ export const weatherService = {
     });
 
     const result = await res.json();
-    return result.data.getCityTrends || [];
+    const trendsData = result.data.getCityTrends || [];
+
+    // Cache the result
+    setCache(cacheKey, trendsData, CACHE_TTL);
+    console.log('💾 [Cache] Cached trends data for', cityName);
+
+    return trendsData;
   },
 
   fetchPopularCities: async (): Promise<PopularCity[]> => {

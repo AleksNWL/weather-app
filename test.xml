@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0" version="24.6.2" etag="V6it5Jw7Yb7K-YV6MmjJ" type="device">
+    <diagram name="Page-1" id="Jp8RNjPYn0k-_kQK5C8g">
+        <mxGraphModel dx="1642" dy="902" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+
+                <!-- Main Container -->
+                <mxCell id="mainContainer" value="WEATHER APP ARCHITECTURE" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;swimlaneFillColor=#ffffff;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="50" width="650" height="700" as="geometry" />
+                </mxCell>
+
+                <!-- Client Layer -->
+                <mxCell id="clientLayer" value="CLIENT LAYER (React)&lt;br&gt;- User interface&lt;br&gt;- Displays weather, forecasts, analytics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="mainContainer">
+                    <mxGeometry x="10" y="40" width="630" height="90" as="geometry" />
+                </mxCell>
+
+                <!-- Client Components -->
+                <mxCell id="clientComponents" value="" style="group;" vertex="1" connectable="0" parent="mainContainer">
+                    <mxGeometry x="10" y="140" width="630" height="80" as="geometry" />
+                </mxCell>
+
+                <mxCell id="mainApp" value="Main App&lt;br&gt;Component" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="clientComponents">
+                    <mxGeometry x="80" y="0" width="150" height="80" as="geometry" />
+                </mxCell>
+
+                <mxCell id="hooksUtils" value="Hooks / Utils&lt;br&gt;(State, Theme)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="clientComponents">
+                    <mxGeometry x="240" y="0" width="150" height="80" as="geometry" />
+                </mxCell>
+
+                <mxCell id="uiComponents" value="UI Components&lt;br&gt;(Header, Footer, etc.)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="clientComponents">
+                    <mxGeometry x="400" y="0" width="150" height="80" as="geometry" />
+                </mxCell>
+
+                <!-- API Gateway -->
+                <mxCell id="apiGateway" value="API GATEWAY (GraphQL)&lt;br&gt;- Single entry point for client requests&lt;br&gt;- Handles queries and mutations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="mainContainer">
+                    <mxGeometry x="10" y="240" width="630" height="90" as="geometry" />
+                </mxCell>
+
+                <!-- Services -->
+                <mxCell id="services" value="" style="group;" vertex="1" connectable="0" parent="mainContainer">
+                    <mxGeometry x="10" y="340" width="630" height="120" as="geometry" />
+                </mxCell>
+
+                <mxCell id="weatherService" value="Weather Service&lt;br&gt;- Provides current weather&lt;br&gt;- Forecast data&lt;br&gt;- City search" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="services">
+                    <mxGeometry x="40" y="0" width="270" height="120" as="geometry" />
+                </mxCell>
+
+                <mxCell id="analyticsService" value="Analytics Service&lt;br&gt;- Provides stats and trends&lt;br&gt;- Stores history" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="services">
+                    <mxGeometry x="320" y="0" width="270" height="120" as="geometry" />
+                </mxCell>
+
+                <!-- External API -->
+                <mxCell id="externalApi" value="External Weather API (e.g., Open-Meteo)&lt;br&gt;- Geocoding&lt;br&gt;- Current weather&lt;br&gt;- Forecast" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="mainContainer">
+                    <mxGeometry x="10" y="470" width="630" height="100" as="geometry" />
+                </mxCell>
+
+                <!-- Database -->
+                <mxCell id="database" value="Database (MongoDB)&lt;br&gt;- Stores weather history&lt;br&gt;- Stores analytics data" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="mainContainer">
+                    <mxGeometry x="10" y="580" width="630" height="90" as="geometry" />
+                </mxCell>
+
+                <!-- Connections -->
+                <!-- Client to API Gateway -->
+                <mxCell id="conn1" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="clientLayer" target="apiGateway">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="380" y="190" as="sourcePoint" />
+                        <mxPoint x="430" y="140" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- API Gateway to Weather Service -->
+                <mxCell id="conn2" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="apiGateway" target="weatherService">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="235" y="330" as="sourcePoint" />
+                        <mxPoint x="285" y="280" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- API Gateway to Analytics Service -->
+                <mxCell id="conn3" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="apiGateway" target="analyticsService">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="415" y="330" as="sourcePoint" />
+                        <mxPoint x="465" y="280" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- Weather Service to External API -->
+                <mxCell id="conn4" value="REST / HTTP" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="conn5">
+                    <mxGeometry x="-0.1594" y="1" relative="1" as="geometry">
+                        <mxPoint x="41" y="-8" as="offset" />
+                    </mxGeometry>
+                </mxCell>
+
+                <mxCell id="conn5" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="weatherService" target="externalApi">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="175" y="460" as="sourcePoint" />
+                        <mxPoint x="225" y="410" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- Analytics Service to Database -->
+                <mxCell id="conn6" value="REST / HTTP" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="conn7">
+                    <mxGeometry x="-0.1538" y="-1" relative="1" as="geometry">
+                        <mxPoint x="-80" y="-8" as="offset" />
+                    </mxGeometry>
+                </mxCell>
+
+                <mxCell id="conn7" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="analyticsService" target="database">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="455" y="580" as="sourcePoint" />
+                        <mxPoint x="505" y="530" as="targetPoint" />
+                    </mxGeometry>
+                </mxCell>
+
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
