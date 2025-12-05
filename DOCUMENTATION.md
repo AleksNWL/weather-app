@@ -45,17 +45,19 @@ Weather App — это веб-приложение для получения и�
 
 #### FR4: История запросов
 - FR4.1: Каждый запрос о погоде записывается в историю с timestamp
-- FR4.2: История хранится локально в браузере (IndexedDB/localStorage)
+- FR4.2: История сохраняется в MongoDB через analytics-service
 - FR4.3: История отправляется на analytics-service для статистики
-- FR4.4: Пользователь может просмотреть историю последних 50 запросов
-- FR4.5: Возможность очистки истории
+- FR4.4: Пользователь может просмотреть историю через GraphQL API с пагинацией
+- FR4.5: Возможность очистки истории через cleanup endpoint
 
 #### FR5: Аналитика и статистика
 - FR5.1: Backend отслеживает популярные города (счетчик запросов)
 - FR5.2: Система отображает график "Популярные города"
 - FR5.3: Система отображает график "История запросов по времени"
-- FR5.4: Статистика сохраняется в MongoDB с TTL-индексом (30 дней)
-- FR5.5: REST API /stats для получения статистики
+- FR5.4: Статистика сохраняется в MongoDB
+- FR5.5: REST API /stats/cities и /stats/city/:city для получения статистики
+- FR5.6: REST API /popular для популярных городов
+- FR5.7: REST API /trends/:city для трендов температуры
 
 #### FR6: Поддержка русского языка
 - FR6.1: Интерфейс полностью на русском языке
@@ -73,7 +75,12 @@ Weather App — это веб-приложение для получения и�
 - FR8.1: GET /weather/:city - текущая погода
 - FR8.2: GET /forecast/:city - прогноз на 5 дней
 - FR8.3: GET /search/:query - поиск городов (автодополнение)
-- FR8.4: GET /stats - статистика по популярным городам
+- FR8.4: GET /stats/cities - статистика по всем городам
+- FR8.5: GET /stats/city/:city - статистика по конкретному городу
+- FR8.6: GET /popular - популярные города
+- FR8.7: GET /trends/:city - тренды температуры
+- FR8.8: GET /history - история запросов
+- FR8.9: POST /history - добавление записи в историю
 
 #### FR9: Темная и светлая темы
 - FR9.1: Приложение поддерживает переключение между темной и светлой темами
@@ -86,8 +93,8 @@ Weather App — это веб-приложение для получения и�
 #### NFR1: Производительность
 - NFR1.1: Время ответа текущей погоды: < 2 сек (включая сетевую задержку)
 - NFR1.2: Время ответа поиска городов: < 1 сек
-- NFR1.3: Кэширование на клиенте GraphQL запросов (Apollo Client)
-- NFR1.4: Кэширование на server-side (Redis/in-memory)
+- NFR1.3: Кэширование на клиенте через React state
+- NFR1.4: Кэширование на server-side (in-memory)
 - NFR1.5: Времени-ориентированное инвалидирование кэша (TTL = 5 мин)
 
 #### NFR2: Масштабируемость
@@ -116,7 +123,7 @@ Weather App — это веб-приложение для получения и�
 - NFR5.2: Мобильные браузеры: iOS Safari, Chrome Mobile
 - NFR5.3: Responsive design: 320px - 2560px (мобильный - 4K)
 - NFR5.4: Node.js: 18.x LTS
-- NFR5.5: React: 18.x
+- NFR5.5: React: 19.x
 
 ---
 
@@ -151,7 +158,7 @@ Weather App — это веб-приложение для получения и�
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    КЛИЕНТСКАЯ ЧАСТЬ                         │
-│  React + TypeScript + Apollo Client + Recharts              │
+│  React + TypeScript + Fetch API + Recharts                  │
 │  (localhost:3000) - Dark/Light Theme                        │
 └────────────────────┬────────────────────────────────────────┘
                      │ REST / GraphQL
@@ -244,12 +251,12 @@ background: rgba(255, 255, 255, 0.1);
 
 ### 6.1 Frontend Technologies
 
-#### React 18.x
+#### React 19.x
 ```
 ✅ ВЫБРАНО
 ├─ Компонентный подход (переиспользуемость)
 ├─ Virtual DOM для оптимизации производительности
-├─ Rich ecosystem (Apollo, Recharts)
+├─ Rich ecosystem (Recharts, React Router)
 ├─ TypeScript поддержка из коробки
 └─ Активное сообщество и документация
 
@@ -273,18 +280,18 @@ background: rgba(255, 255, 255, 0.1);
 └─ Flow: альтернатива TS, но менее популярна
 ```
 
-#### Apollo Client
+#### Fetch API (Native)
 ```
 ✅ ВЫБРАНО
-├─ Встроенное кэширование (Apollo Cache)
-├─ Real-time subscriptions support
-├─ Оптимистичные updates
-├─ Devtools расширение для отладки
-└─ Отличная интеграция с React (useQuery hooks)
+├─ Нативный браузерный API (без зависимостей)
+├─ Простота использования
+├─ Легковесное решение
+├─ Прямые GraphQL запросы через POST
+└─ Полный контроль над запросами
 
 Альтернативы:
-├─ urql: легче и меньше, но менее функционально
-├─ Relay: более сложный setup
+├─ Apollo Client: больше функций, но тяжелее
+├─ urql: легче Apollo, но все еще зависимость
 └─ SWR / React Query: для REST, не GraphQL
 ```
 
@@ -344,7 +351,7 @@ background: rgba(255, 255, 255, 0.1);
 ├─ Сильная типизация (SDL)
 ├─ Самодокументирующееся API (Playground)
 ├─ Resolver functions гибче REST
-├─ Apollo Client отлично интегрируется с React
+├─ Fetch API для запросов на клиенте
 └─ Subscriptions для real-time (если потребуется)
 
 Альтернативы:
@@ -358,7 +365,7 @@ background: rgba(255, 255, 255, 0.1);
 ✅ ВЫБРАНО для analytics
 ├─ Документная модель идеальна для статистики
 ├─ Flexible schema (легко добавлять новые поля)
-├─ TTL-индексы для автоматического удаления старых данных
+├─ Индексы для оптимизации запросов
 ├─ Horizontal scaling (sharding)
 └─ Rich query language (aggregation pipeline)
 
@@ -417,21 +424,21 @@ background: rgba(255, 255, 255, 0.1);
 │                    WEATHER APP SYSTEM                           │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │              WEB BROWSER / REACT CLIENT                  │  │
-│  │              (Port 3000 / Nginx)                          │  │
-│  │                                                            │  │
-│  │  • Header (Logo, Theme Toggle)                           │  │
-│  │  • SearchBox (City Input, Popular Cities)                │  │
-│  │  • Navigation (Weather / History / Analytics)            │  │
-│  │  • Weather Component (Current, Stats)                    │  │
-│  │  • Forecast Component (5 Days)                           │  │
-│  │  • Analytics Component (Charts, Trends)                  │  │
-│  │  • Footer                                                 │  │
-│  │                                                            │  │
-│  │  Tech: React 18, TypeScript, CSS3, Dark/Light Theme      │  │
-│  │                                                            │  │
-│  └───────────────────────┬──────────────────────────────────┘  │
+  │  ┌──────────────────────────────────────────────────────────┐  │
+  │  │              WEB BROWSER / REACT CLIENT                  │  │
+  │  │              (Port 3000 / Nginx)                          │  │
+  │  │                                                            │  │
+  │  │  • Header (Logo, Theme Toggle)                           │  │
+  │  │  • SearchBox (City Input, Popular Cities)                │  │
+  │  │  • Navigation (Weather / History / Analytics)            │  │
+  │  │  • Weather Component (Current, Stats)                    │  │
+  │  │  • Forecast Component (5 Days)                           │  │
+  │  │  • Analytics Component (Charts, Trends)                  │  │
+  │  │  • Footer                                                 │  │
+  │  │                                                            │  │
+  │  │  Tech: React 19, TypeScript, CSS3, Dark/Light Theme      │  │
+  │  │                                                            │  │
+  │  └───────────────────────┬──────────────────────────────────┘  │
 │                          │ GraphQL                              │
 │                          │ (HTTP POST)                          │
 │                          ▼                                      │
@@ -498,11 +505,10 @@ background: rgba(255, 255, 255, 0.1);
 │  ║         CLIENT LAYER (React - Port 3000)                  ║   │
 │  ╚════════════════════════════════════════════════════════════╝   │
 │                                                                     │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐             │
-│  │ App.tsx      │  │ useTheme     │  │ weatherService
- │             │
-│  │ (Main)      │  │ (Hook)       │  │ (GraphQL)    │             │
-│  └──────────────┘  └──────────────┘  └──────────────┘             │
+  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐             │
+  │  │ App.tsx      │  │ useTheme     │  │ weatherService│             │
+  │  │ (Main)      │  │ (Hook)       │  │ (Fetch API)  │             │
+  │  └──────────────┘  └──────────────┘  └──────────────┘             │
 │         │                │                     │                   │
 │         └────────────────┼─────────────────────┘                   │
 │                          │                                         │
@@ -792,9 +798,7 @@ SAVE TO HISTORY
 ║                                            ║
 ║ METADATA                                   ║
 ║ ├─ date: Date (indexed, DESC)              ║
-║ ├─ source: String (city/coordinates)       ║
-║ ├─ createdAt: Date (default: now)          ║
-║ └─ updatedAt: Date                         ║
+║ └─ source: String (default: 'city')        ║
 ║                                            ║
 ╠════════════════════════════════════════════╣
 ║ INDEXES                                    ║
@@ -836,9 +840,7 @@ SAMPLE DOCUMENT:
     "lon": 37.6173
   },
   "date": ISODate("2024-12-04T10:30:00Z"),
-  "source": "city",
-  "createdAt": ISODate("2024-12-04T10:30:15Z"),
-  "updatedAt": ISODate("2024-12-04T10:30:15Z")
+  "source": "city"
 }
 ```
 
@@ -846,63 +848,56 @@ SAMPLE DOCUMENT:
 
 ```graphql
 # ============================================
-# SCALAR TYPES
-# ============================================
-
-scalar Date
-scalar JSON
-
-# ============================================
 # TYPES (Query Responses)
 # ============================================
 
 type Coordinates {
-  lat: Float!
-  lon: Float!
+  lat: Float
+  lon: Float
 }
 
 type Weather {
-  city: String!
-  country: String!
+  city: String
+  foundCity: String
+  country: String
   originalQuery: String
-  temperature: Float!
-  feels_like: Float!
-  temp_min: Float!
-  temp_max: Float!
-  humidity: Int!
-  pressure: Int!
-  wind_speed: Float!
-  wind_deg: Int!
-  description: String!
-  icon: String!
-  weathercode: Int!
-  coordinates: Coordinates!
+  temperature: Float
+  feels_like: Float
+  temp_min: Float
+  temp_max: Float
+  humidity: Int
+  pressure: Int
+  wind_speed: Float
+  wind_deg: Int
+  description: String
+  icon: String
+  weathercode: Int
+  coordinates: Coordinates
 }
 
 type ForecastDay {
-  date: String!
-  avgTemp: String!
-  minTemp: String!
-  maxTemp: String!
+  date: String
+  avgTemp: String
+  minTemp: String
+  maxTemp: String
   avgHumidity: Int
-  mostCommonDescription: String!
-  icon: String!
-  weathercode: Int!
+  mostCommonDescription: String
+  icon: String
+  weathercode: Int
 }
 
 type Forecast {
-  city: String!
-  country: String!
-  forecast: [ForecastDay!]!
+  city: String
+  country: String
+  forecast: [ForecastDay]
 }
 
 type CitySearchResult {
-  name: String!
-  localName: String
-  country: String!
+  name: String
+  country: String
   state: String
-  lat: Float!
-  lon: Float!
+  lat: Float
+  lon: Float
 }
 
 type CityStats {
@@ -910,47 +905,40 @@ type CityStats {
   maxTemp: Float
   minTemp: Float
   avgHumidity: Float
-  avgPressure: Float
-  avgWindSpeed: Float
-  totalRequests: Int!
+  totalRequests: Int
   mostCommonDescription: String
-  period: Int
 }
 
 type TrendData {
-  date: String!
+  date: String
   avgTemp: Float
   maxTemp: Float
   minTemp: Float
 }
 
 type PopularCity {
-  city: String!
-  requests: Int!
-  country: String!
-}
-
-type HistoryEntry {
-  city: String!
-  temperature: Float!
-  description: String!
-  date: String!
-  humidity: Int
-  pressure: Int
-  wind_speed: Float
+  city: String
+  requests: Int
   country: String
 }
 
+type HistoryEntry {
+  city: String
+  temperature: Float
+  description: String
+  date: String
+}
+
 type HistoryResponse {
-  data: [HistoryEntry!]!
-  pagination: Pagination!
+  data: [HistoryEntry]
+  pagination: Pagination
 }
 
 type Pagination {
-  page: Int!
-  limit: Int!
-  total: Int!
-  pages: Int!
+  page: Int
+  limit: Int
+  total: Int
+  pages: Int
 }
 
 # ============================================
@@ -989,31 +977,8 @@ type Query {
   getHistory(page: Int, limit: Int): HistoryResponse!
 }
 
-# ============================================
-# ROOT MUTATION (Future)
-# ============================================
-
-type Mutation {
-  """Save user preference"""
-  saveUserPreference(key: String!, value: String!): Boolean
-
-  """Clear search history"""
-  clearHistory: Boolean
-}
-
-# ============================================
-# ROOT SUBSCRIPTION (Future)
-# ============================================
-
-type Subscription {
-  """Subscribe to weather updates for a city"""
-  weatherUpdated(city: String!): Weather
-}
-
 schema {
   query: Query
-  mutation: Mutation
-  subscription: Subscription
 }
 ```
 
@@ -1029,149 +994,278 @@ schema {
 version: '3.8'
 
 services:
-  client:
-    build: ./client
+  mongo:
+    image: mongo:latest
+    container_name: weather-mongo
     ports:
-      - "3000:3000"
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - weather-network
+
+  analytics-service:
+    build: ./analytics-service
+    container_name: analytics-service
+    ports:
+      - "4002:4002"
     environment:
-      - REACT_APP_GRAPHQL_URL=http://localhost:4000/graphql
+      - MONGO_URI=mongodb://mongo:27017/weather
+      - PORT=4002
     depends_on:
-      - gateway
+      - mongo
+    networks:
+      - weather-network
+    command: node src/index.js
+
+  weather-service:
+    build: ./weather-service
+    container_name: weather-service
+    environment:
+      - PORT=4001
+      - ANALYTICS_SERVICE_URL=http://analytics-service:4002
+    ports:
+      - "4001:4001"
+    depends_on:
+      - analytics-service
+    networks:
+      - weather-network
+    command: node src/index.js
 
   gateway:
     build: ./gateway
+    container_name: gateway
     ports:
       - "4000:4000"
     environment:
+      - PORT=4000
       - WEATHER_SERVICE_URL=http://weather-service:4001
       - ANALYTICS_SERVICE_URL=http://analytics-service:4002
     depends_on:
       - weather-service
       - analytics-service
+    networks:
+      - weather-network
+    command: node src/index.js
 
-  weather-service:
-    build: ./weather-service
+  client:
+    build: 
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: weather-client
     ports:
-      - "4001:4001"
-
-  analytics-service:
-    build: ./analytics-service
-    ports:
-      - "4002:4002"
-    environment:
-      - MONGODB_URI=mongodb://mongo:27017/weather-analytics
+      - "3000:80"
     depends_on:
-      - mongo
-
-  mongo:
-    image: mongo:6
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-    environment:
-      - MONGO_INITDB_DATABASE=weather-analytics
+      - gateway
+    networks:
+      - weather-network
 
 volumes:
   mongo-data:
+
+networks:
+  weather-network:
+    driver: bridge
 ```
 
 ### 8.2 Kubernetes Deployment (Production)
 
 ```yaml
 ---
-# Client Deployment
+# MongoDB Deployment + PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: weather-client
+  name: mongo
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: weather-client
+      app: mongo
   template:
     metadata:
       labels:
-        app: weather-client
+        app: mongo
     spec:
       containers:
-      - name: client
-        image: weather-app-client:latest
+      - name: mongo
+        image: mongo:latest
         ports:
-        - containerPort: 3000
-        env:
-        - name: REACT_APP_GRAPHQL_URL
-          value: "https://api.weather-app.com/graphql"
-        resources:
-          requests:
-            cpu: "100m"
-            memory: "256Mi"
-          limits:
-            cpu: "500m"
-            memory: "512Mi"
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 3000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 3000
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - containerPort: 27017
+        volumeMounts:
+        - name: mongo-storage
+          mountPath: /data/db
+      volumes:
+      - name: mongo-storage
+        persistentVolumeClaim:
+          claimName: mongo-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+spec:
+  selector:
+    app: mongo
+  ports:
+  - protocol: TCP
+    port: 27017
+    targetPort: 27017
+  type: ClusterIP
 
 ---
-# Gateway Deployment
+# Analytics Service
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: weather-gateway
+  name: analytics-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: weather-gateway
+      app: analytics-service
   template:
     metadata:
       labels:
-        app: weather-gateway
+        app: analytics-service
+    spec:
+      containers:
+      - name: analytics-service
+        image: analytics-service:latest
+        ports:
+        - containerPort: 4002
+        env:
+        - name: MONGO_URI
+          value: mongodb://mongo:27017/weather
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-service
+spec:
+  selector:
+    app: analytics-service
+  ports:
+  - protocol: TCP
+    port: 4002
+    targetPort: 4002
+  type: ClusterIP
+
+---
+# Weather Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: weather-service
+  template:
+    metadata:
+      labels:
+        app: weather-service
+    spec:
+      containers:
+      - name: weather-service
+        image: weather-service:latest
+        ports:
+        - containerPort: 4001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weather-service
+spec:
+  selector:
+    app: weather-service
+  ports:
+  - protocol: TCP
+    port: 4001
+    targetPort: 4001
+  type: ClusterIP
+
+---
+# Gateway (GraphQL)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
     spec:
       containers:
       - name: gateway
-        image: weather-app-gateway:latest
+        image: gateway:latest
         ports:
         - containerPort: 4000
-        env:
-        - name: WEATHER_SERVICE_URL
-          value: "http://weather-service:4001"
-        - name: ANALYTICS_SERVICE_URL
-          value: "http://analytics-service:4002"
-        resources:
-          requests:
-            cpu: "200m"
-            memory: "512Mi"
-          limits:
-            cpu: "1000m"
-            memory: "1Gi"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 4000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 4000
-          initialDelaySeconds: 5
-          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+spec:
+  selector:
+    app: gateway
+  ports:
+  - protocol: TCP
+    port: 4000
+    targetPort: 4000
+  type: ClusterIP
 
 ---
-# Services, StatefulSets, etc.
-# (see all.yaml for complete K8s manifests)
+# React Client
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client
+  template:
+    metadata:
+      labels:
+        app: client
+    spec:
+      containers:
+      - name: client
+        image: client:latest
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: client
+spec:
+  selector:
+    app: client
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 80
+  type: NodePort
 ```
 
 ---
@@ -1195,10 +1289,10 @@ spec:
 
 ✅ **Phase 3: Frontend UI**
 - ✅ React + TypeScript приложение
-- ✅ Apollo Client для GraphQL
+- ✅ Fetch API для GraphQL запросов
 - ✅ Recharts для визуализации статистики
 - ✅ Responsive design (мобильный-адаптивный)
-- ✅ История запросов (localStorage)
+- ✅ История запросов через GraphQL API
 
 ✅ **Phase 4: Infrastructure**
 - ✅ Docker Compose для локальной разработки
@@ -1261,7 +1355,7 @@ docker-compose up --build
 # GraphQL: http://localhost:4000/graphql
 # Weather API: http://localhost:4001
 # Analytics API: http://localhost:4002
-# MongoDB: mongodb://localhost:27017/weather-analytics
+# MongoDB: mongodb://localhost:27017/weather
 ```
 
 ### 10.2 Production Deployment (Kubernetes)
@@ -1294,13 +1388,19 @@ curl http://localhost:4001/forecast/London
 # Тест поиска городов
 curl http://localhost:4001/search/new
 
+# Тест статистики
+curl http://localhost:4002/stats/city/Moscow?days=30
+
+# Тест популярных городов
+curl http://localhost:4002/popular?limit=5
+
+# Тест истории
+curl http://localhost:4002/history?page=1&limit=20
+
 # GraphQL query
 curl -X POST http://localhost:4000/graphql \
   -H "Content-Type: application/json" \
   -d '{"query": "{ getWeather(city: \"Paris\") { temperature humidity } }"}'
-
-# Bash скрипт для комплексного тестирования
-bash test-open-meteo.sh
 ```
 
 ---
@@ -1322,8 +1422,8 @@ bash test-open-meteo.sh
 ### Технологический стек:
 
 **Frontend:**
-- React 18.x + TypeScript
-- Apollo Client (GraphQL)
+- React 19.x + TypeScript
+- Fetch API (GraphQL запросы)
 - Recharts (визуализация)
 - Dark/Light Theme с плавными переходами
 - Responsive CSS Grid/Flexbox
