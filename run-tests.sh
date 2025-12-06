@@ -30,7 +30,7 @@ echo ""
 echo "3️⃣  Тест: Запрос прогноза для London"
 curl -s -X POST $GATEWAY_URL \
   -H "Content-Type: application/json" \
-  -d '{"query": "query { getForecast(city: \"London\") { city country forecast { date avgTemp description } } }"}' | jq '.' 2>/dev/null || curl -s -X POST $GATEWAY_URL -H "Content-Type: application/json" -d '{"query": "query { getForecast(city: \"London\") { city country forecast { date avgTemp description } } }"}'
+  -d '{"query": "query { getForecast(city: \"London\") { city country forecast { date avgTemp minTemp maxTemp mostCommonDescription } } }"}' | jq '.' 2>/dev/null || curl -s -X POST $GATEWAY_URL -H "Content-Type: application/json" -d '{"query": "query { getForecast(city: \"London\") { city country forecast { date avgTemp minTemp maxTemp mostCommonDescription } } }"}'
 echo ""
 echo "---"
 echo ""
