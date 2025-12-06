@@ -1,0 +1,36 @@
+@startuml Weather App - Simplified Sequence Diagram
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam sequenceMessageAlign center
+
+title Weather App - Основной сценарий запроса погоды
+
+actor User
+participant "React Client" as Client
+participant "API Gateway\n(GraphQL)" as Gateway
+participant "Weather Service" as Weather
+participant "Open-Meteo API" as API
+participant "Analytics Service" as Analytics
+database "MongoDB" as DB
+
+User -> Client: Ввод города "Moscow"
+Client -> Gateway: GraphQL Query\ngetWeather(city: "Moscow")
+Gateway -> Weather: REST GET /weather/Moscow
+Weather -> API: GET /v1/forecast?...
+API --> Weather: Weather Data
+Weather --> Gateway: Weather Object
+Gateway --> Client: GraphQL Response
+Client -> User: Отображение погоды
+
+note right of Client: Кэширование на клиенте\n(localStorage, TTL 5 мин)
+
+Client -> Gateway: Сохранение в историю (async)
+Gateway -> Analytics: POST /history
+Analytics -> DB: Insert WeatherHistory
+DB --> Analytics: Success
+Analytics --> Gateway: OK
+Gateway --> Client: OK
+
+@enduml
+

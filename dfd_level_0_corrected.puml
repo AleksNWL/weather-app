@@ -1,0 +1,47 @@
+@startuml DFD_Level_0_Corrected
+
+title DFD Level 0 - Контекстная диаграмма Weather App
+
+skinparam defaultTextAlignment center
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam component {
+  BackgroundColor<<External>> #E3F2FD
+  BackgroundColor<<Process>> #FFF8E1
+  BorderColor black
+}
+
+' Внешние сущности
+component "Пользователь\n(User)" <<External>> as User
+component "Open-Meteo API\n(External)" <<External>> as OpenMeteo
+
+' Основной процесс (окружность для DFD процесса)
+circle "Weather App\nSystem" <<Process>> as WeatherApp
+
+' Потоки данных от пользователя к системе
+User --> WeatherApp : "1. Запрос погоды\n(Search weather)"
+User --> WeatherApp : "2. Просмотр истории\n(View history)"
+User --> WeatherApp : "3. Запрос аналитики\n(Analytics request)"
+
+' Потоки данных от системы к пользователю
+WeatherApp --> User : "4. Данные о погоде\n(Weather data)"
+WeatherApp --> User : "5. История запросов\n(History data)"
+WeatherApp --> User : "6. Аналитические данные\n(Analytics data)"
+
+' Потоки данных от системы к Open-Meteo API
+WeatherApp --> OpenMeteo : "7. Запрос координат\n(Geocoding request)"
+WeatherApp --> OpenMeteo : "8. Запрос погоды\n(Weather request)"
+
+' Потоки данных от Open-Meteo API к системе
+OpenMeteo --> WeatherApp : "9. Координаты города\n(City coordinates)"
+OpenMeteo --> WeatherApp : "10. Метеорологические данные\n(Weather data)"
+
+note right of WeatherApp
+  <b>Система обрабатывает:</b>
+  • Запросы погоды
+  • Историю запросов
+  • Аналитику и статистику
+end note
+
+@enduml
+

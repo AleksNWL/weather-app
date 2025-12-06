@@ -225,6 +225,35 @@ INFRASTRUCTURE:
 // Асинхронное логирование статистики (не блокирует основной поток)
 ```
 
+#### ✅ MVC (Model-View-Controller) Pattern
+```typescript
+// Реализация MVC паттерна в React приложении
+
+// MODEL (Модель данных)
+// - services/weatherService.ts - бизнес-логика и работа с API
+// - types/index.ts - типы данных (TypeScript интерфейсы)
+// - models/WeatherHistory.js (backend) - модели данных MongoDB
+
+// VIEW (Представление)
+// - components/ - UI компоненты (Weather, Forecast, Analytics)
+// - pages/ - страницы приложения (WeatherPage, HistoryPage, AnalyticsPage)
+// - App.tsx - корневой компонент приложения
+
+// CONTROLLER (Контроллер)
+// - App.tsx - управление состоянием и роутингом
+// - hooks/useTheme.ts - управление темой приложения
+// - resolvers/query.js (backend) - GraphQL resolvers (контроллеры запросов)
+// - routes/ (backend) - REST API маршруты (Express контроллеры)
+
+// Пример взаимодействия:
+// 1. View (Weather.tsx) вызывает Controller (App.tsx)
+// 2. Controller вызывает Model (weatherService.fetchWeather())
+// 3. Model получает данные из API
+// 4. Model возвращает данные в Controller
+// 5. Controller обновляет состояние
+// 6. View перерисовывается с новыми данными
+```
+
 #### ✅ Client-Side Caching (Cache-Aside Pattern)
 ```typescript
 // Реализация: client/src/utils/cache.ts
@@ -1600,11 +1629,3 @@ fetchWeather(cityName: string) {
 - Kubernetes (K8s)
 - Health checks endpoints (/health)
 - Open-Meteo API (бесплатный)
-
-### Следующие шаги:
-
-1. Развертывание на облачной платформе (AWS/GCP/Azure)
-2. Настройка CI/CD (GitHub Actions)
-3. Добавление мониторинга (Prometheus + Grafana)
-4. Реализация дополнительных паттернов (Redis, Message Queue)
-5. Оптимизация производительности (CDN, Web Workers)

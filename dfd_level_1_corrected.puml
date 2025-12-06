@@ -1,0 +1,107 @@
+@startuml DFD_Level_1_Corrected
+
+title DFD Level 1 - Детализация процессов Weather App
+
+skinparam card {
+  BackgroundColor #FFF8E1
+  BorderColor black
+  RoundCorner 15
+}
+
+skinparam rectangle {
+  BackgroundColor #E3F2FD
+  BorderColor black
+}
+
+skinparam component {
+  BackgroundColor #E8F5E9
+  BorderColor black
+}
+
+' --- Внешние сущности ---
+rectangle "Пользователь\n(User)" as User
+rectangle "Open-Meteo API\n(External)" as API
+
+' --- Процессы ---
+card "1.0\nVALIDATE INPUT" as P1
+card "2.0\nFETCH WEATHER DATA" as P2
+card "3.0\nPROCESS & DISPLAY WEATHER" as P3
+card "4.0\nSAVE TO HISTORY" as P4
+card "5.0\nUPDATE ANALYTICS" as P5
+card "6.0\nFETCH HISTORY PAGE" as P6
+card "7.0\nDISPLAY HISTORY" as P7
+
+' --- Хранилища данных ---
+card "D1: Client Cache\n(localStorage)" as D1 #E8F5E9
+card "D2: MongoDB\n(Weather History)" as D2 #E8F5E9
+
+' === ПОТОК ЗАПРОСА ПОГОДЫ ===
+
+' От пользователя к процессу валидации
+User --> P1 : "City name"
+
+' Валидация
+P1 --> P2 : "Valid city"
+P1 --> User : "Error message\n(Invalid input)"
+
+' Проверка кэша ПЕРЕД запросом к API
+P2 <--> D1 : "Check cache\n(Read if exists)"
+
+' Запрос к внешнему API
+P2 --> API : "Geocoding request\nWeather request"
+API --> P2 : "City coordinates\nWeather data"
+
+' Обработка и отображение
+P2 --> P3 : "Weather objects"
+P3 --> D1 : "Save to cache\n(TTL 5 min)"
+P3 --> User : "Rendered weather UI"
+
+' Сохранение в историю (автоматически из Weather Service)
+P2 --> P4 : "Weather data\n(for history)"
+P4 --> P5 : "History record"
+P5 --> D2 : "Insert document\nUpdate stats"
+
+' === ПОТОК ЗАПРОСА ИСТОРИИ ===
+
+User --> P6 : "History request\n(page, limit)"
+P6 <--> D2 : "Query history\nReturn records"
+P6 --> P7 : "History records"
+P7 --> User : "Rendered history UI"
+
+' === ПОТОК ЗАПРОСА АНАЛИТИКИ ===
+
+User --> P2 : "Analytics request\n(city, days)"
+P2 <--> D2 : "Query stats\nReturn aggregated data"
+P2 --> P3 : "Analytics data"
+P3 --> User : "Charts and trends"
+
+' --- Цвета стрелок для наглядности ---
+User --> P1 #1976D2
+P1 --> P2 #1976D2
+P2 --> API #F57C00
+API --> P2 #F57C00
+P3 --> User #388E3C
+D1 --> P2 #8BC34A
+P2 --> D1 #8BC34A
+P3 --> D1 #8BC34A
+D2 --> P5 #8BC34A
+P5 --> D2 #8BC34A
+D2 --> P6 #8BC34A
+P6 --> D2 #8BC34A
+
+note right of D1
+  <b>Клиентское кэширование:</b>
+  • Проверка перед запросом
+  • TTL = 5 минут
+  • Автоматическая очистка
+end note
+
+note right of P2
+  <b>Weather Service:</b>
+  • Автоматически отправляет
+    данные в Analytics
+  • Не блокирует основной ответ
+end note
+
+@enduml
+

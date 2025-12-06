@@ -1,0 +1,188 @@
+@startuml Weather App Sequence Diagram
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam sequenceMessageAlign center
+skinparam roundcorner 10
+skinparam maxmessagesize 60
+
+title Weather App - UML Sequence Diagram\nМикросервисная архитектура с GraphQL Gateway
+
+actor User as user
+participant "React Client\n(localhost:3000)" as client
+participant "LocalStorage\n(Cache)" as cache
+participant "API Gateway\n(GraphQL)\n(localhost:4000)" as gateway
+participant "Weather Service\n(REST)\n(localhost:4001)" as weather
+participant "Analytics Service\n(REST)\n(localhost:4002)" as analytics
+participant "Open-Meteo API\n(External)" as openmeteo
+database "MongoDB\n(Port 27017)" as mongo
+
+== Сценарий 1: Запрос текущей погоды ==
+
+user -> client: Ввод названия города\n(например, "Moscow")
+activate client
+
+client -> cache: Проверка кэша\ngetCache("weather_moscow")
+activate cache
+cache --> client: Данные не найдены\nили устарели
+deactivate cache
+
+client -> gateway: POST /graphql\nquery { getWeather(city: "Moscow") }
+activate gateway
+
+gateway -> gateway: Валидация запроса\nGraphQL Schema
+gateway -> weather: REST GET\n/weather/Moscow
+activate weather
+
+weather -> openmeteo: GET /v1/geocoding\n?name=Moscow&count=1
+activate openmeteo
+openmeteo --> weather: Координаты\n{lat: 55.7558, lon: 37.6173}
+deactivate openmeteo
+
+weather -> openmeteo: GET /v1/forecast\n?latitude=55.7558&longitude=37.6173\n&current=temperature_2m,...
+activate openmeteo
+openmeteo --> weather: Метеорологические данные\n{temperature: 5.2, humidity: 85, ...}
+deactivate openmeteo
+
+weather -> weather: Парсинг данных\nПреобразование WMO кодов
+weather --> gateway: Weather Object\n{city, temperature, humidity, ...}
+deactivate weather
+
+gateway --> client: GraphQL Response\n{data: {getWeather: {...}}}
+deactivate gateway
+
+client -> cache: Сохранение в кэш\nsetCache("weather_moscow", data, TTL=5min)
+activate cache
+cache --> client: Данные сохранены
+deactivate cache
+
+client -> user: Отображение погоды\nТемпература, влажность, описание
+deactivate client
+
+== Сценарий 2: Сохранение в историю (асинхронно) ==
+
+user -> client: Просмотр погоды
+activate client
+
+client -> gateway: POST /graphql\nquery { getWeather(city: "Moscow") }
+activate gateway
+gateway -> weather: REST GET /weather/Moscow
+activate weather
+weather -> openmeteo: GET /v1/forecast...
+activate openmeteo
+openmeteo --> weather: Weather data
+deactivate openmeteo
+weather --> gateway: Weather Object
+deactivate weather
+gateway --> client: GraphQL Response
+deactivate gateway
+
+client -> gateway: POST /graphql\nmutation (async)\nсохранение в историю
+activate gateway
+note right of gateway: Асинхронная операция\nне блокирует UI
+
+gateway -> analytics: REST POST\n/history\n{weather data}
+activate analytics
+
+analytics -> mongo: Insert Document\nWeatherHistory Collection
+activate mongo
+mongo --> analytics: Document ID
+deactivate mongo
+
+analytics -> mongo: Update City Stats\nAggregation Pipeline
+activate mongo
+mongo --> analytics: Updated stats
+deactivate mongo
+
+analytics --> gateway: Success Response\n{id: "...", status: "ok"}
+deactivate analytics
+
+gateway --> client: Success (async)
+deactivate gateway
+
+client -> user: Погода отображена\n(история сохранена в фоне)
+deactivate client
+
+== Сценарий 3: Запрос аналитики ==
+
+user -> client: Запрос статистики города
+activate client
+
+client -> cache: Проверка кэша\ngetCache("stats_moscow_30")
+activate cache
+cache --> client: Данные не найдены
+deactivate cache
+
+client -> gateway: POST /graphql\nquery {\n  getCityStats(city: "Moscow", days: 30)\n}
+activate gateway
+
+gateway -> analytics: REST GET\n/stats/city/Moscow?days=30
+activate analytics
+
+analytics -> mongo: Aggregate Query\nWeatherHistory Collection\n[{ $match: {city: "Moscow"} },\n { $group: {avgTemp, maxTemp, ...} }]
+activate mongo
+mongo --> analytics: Aggregated Stats\n{avgTemp: 8.5, maxTemp: 15.2, ...}
+deactivate mongo
+
+analytics --> gateway: CityStats Object
+deactivate analytics
+
+gateway --> client: GraphQL Response\n{data: {getCityStats: {...}}}
+deactivate gateway
+
+client -> cache: Сохранение в кэш\nsetCache("stats_moscow_30", data)
+activate cache
+cache --> client: Данные сохранены
+deactivate cache
+
+client -> user: Отображение статистики\nГрафики, тренды
+deactivate client
+
+== Сценарий 4: Получение истории запросов ==
+
+user -> client: Запрос истории\n(страница 1, лимит 20)
+activate client
+
+client -> gateway: POST /graphql\nquery {\n  getHistory(page: 1, limit: 20)\n}
+activate gateway
+
+gateway -> analytics: REST GET\n/history?page=1&limit=20
+activate analytics
+
+analytics -> mongo: Find Query\nWeatherHistory.find()\n.sort({date: -1})\n.skip(0).limit(20)
+activate mongo
+mongo --> analytics: History Entries Array\n[{city, temperature, date}, ...]
+deactivate mongo
+
+analytics -> mongo: Count Total Documents\nWeatherHistory.countDocuments()
+activate mongo
+mongo --> analytics: Total count: 150
+deactivate mongo
+
+analytics -> analytics: Формирование пагинации\n{page: 1, limit: 20, total: 150, pages: 8}
+analytics --> gateway: HistoryResponse\n{data: [...], pagination: {...}}
+deactivate analytics
+
+gateway --> client: GraphQL Response
+deactivate gateway
+
+client -> user: Отображение истории\nТаблица запросов с пагинацией
+deactivate client
+
+== Сценарий 5: Использование кэша (hit) ==
+
+user -> client: Повторный запрос\nтого же города
+activate client
+
+client -> cache: Проверка кэша\ngetCache("weather_moscow")
+activate cache
+cache --> client: Данные найдены\nи валидны (TTL не истек)
+deactivate cache
+
+client -> user: Мгновенное отображение\n(без запроса к серверу)
+deactivate client
+
+note right of client: Кэш уменьшает\nнагрузку на сервер\nи улучшает UX
+
+@enduml
+
