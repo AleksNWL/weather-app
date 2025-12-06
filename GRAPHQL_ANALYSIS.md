@@ -404,5 +404,66 @@ query {
 
 ---
 
-*Дата анализа: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")*
+## 11. Локальный запуск без Docker
+
+Для запуска GraphQL Gateway локально на macOS без Docker:
+
+### Быстрый старт:
+
+1. **Установить зависимости:**
+```bash
+cd gateway && npm install && cd ..
+cd weather-service && npm install && cd ..
+cd analytics-service && npm install && cd ..
+```
+
+2. **Запустить MongoDB:**
+```bash
+brew services start mongodb-community
+```
+
+3. **Запустить сервисы** (в отдельных терминалах):
+```bash
+# Терминал 1: Analytics
+cd analytics-service
+MONGO_URI=mongodb://localhost:27017/weather PORT=4002 npm start
+
+# Терминал 2: Weather
+cd weather-service
+PORT=4001 ANALYTICS_SERVICE_URL=http://localhost:4002 npm start
+
+# Терминал 3: Gateway
+cd gateway
+PORT=4000 WEATHER_SERVICE_URL=http://localhost:4001 ANALYTICS_SERVICE_URL=http://localhost:4002 npm start
+```
+
+4. **Или использовать автоматический скрипт:**
+```bash
+./start-local.sh
+```
+
+5. **Тестирование:**
+```bash
+# Проверка доступности
+curl http://localhost:4000/health
+
+# Тест GraphQL
+curl -X POST http://localhost:4000/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query": "query { __typename }"}'
+
+# Или использовать скрипт
+./test-graphql.sh
+```
+
+6. **Открыть GraphQL Playground:**
+```
+http://localhost:4000/graphql
+```
+
+Подробная инструкция: см. `LOCAL_SETUP.md`
+
+---
+
+*Дата анализа: 2024-12-19*
 

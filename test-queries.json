@@ -1,0 +1,45 @@
+{
+  "queries": [
+    {
+      "name": "Простой запрос",
+      "query": "query { __typename }"
+    },
+    {
+      "name": "Запрос погоды для Moscow",
+      "query": "query { getWeather(city: \"Moscow\") { city temperature description humidity wind_speed coordinates { lat lon } } }"
+    },
+    {
+      "name": "Запрос прогноза для London",
+      "query": "query { getForecast(city: \"London\") { city country forecast { date avgTemp minTemp maxTemp description } } }"
+    },
+    {
+      "name": "Поиск городов",
+      "query": "query { searchCities(query: \"Paris\") { name country lat lon } }"
+    },
+    {
+      "name": "Координаты города",
+      "query": "query { getCityCoordinates(city: \"Tokyo\") { lat lon } }"
+    },
+    {
+      "name": "История запросов",
+      "query": "query { getHistory(page: 1, limit: 5) { data { city temperature description date } pagination { total pages page limit } } }"
+    },
+    {
+      "name": "Статистика города",
+      "query": "query { getCityStats(city: \"Berlin\", days: 7) { avgTemp maxTemp minTemp avgHumidity totalRequests mostCommonDescription } }"
+    },
+    {
+      "name": "Популярные города",
+      "query": "query { getPopularCities(limit: 5) { city country requests } }"
+    },
+    {
+      "name": "Тренды города",
+      "query": "query { getCityTrends(city: \"New York\", days: 7) { date avgTemp maxTemp minTemp } }"
+    },
+    {
+      "name": "Погода по координатам",
+      "query": "query { getWeatherByCoords(lat: 55.7558, lon: 37.6173) { city temperature description coordinates { lat lon } } }"
+    }
+  ]
+}
+
